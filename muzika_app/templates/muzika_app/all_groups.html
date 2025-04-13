@@ -1,0 +1,103 @@
+{# muzika_app/templates/muzika_app/all_groups.html #}
+{% extends 'muzika_app/base.html' %}
+
+{% block title %}Visos Grupės{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">Visos Sistemos Grupės (Superuser)</h1>
+
+{# Pranešimai #}
+{% if messages %}
+    <div class="mb-6">
+        {% for message in messages %}
+             <div class="p-3 rounded-md {% if message.tags == 'success' %} bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 {% elif message.tags == 'error' %} bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 {% elif message.tags == 'warning' %} bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-200 {% else %} bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 {% endif %}" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+    {% if all_groups %}
+        <ul class="divide-y divide-gray-200 dark:divide-gray-600">
+            {% for group in all_groups %}
+                <li class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-150 ease-in-out">
+                    <div class="flex flex-wrap items-center justify-between gap-4"> {# Pridėtas flex-wrap #}
+                        {# Grupės informacija #}
+                        <div class="flex-1 min-w-0">
+                            <a href="{% url 'group_admin' group_code=group.code %}" class="text-lg font-semibold text-indigo-600 dark:text-indigo-400 hover:underline truncate" title="Administruoti grupę '{{ group.name }}'">
+                                {{ group.name }}
+                            </a>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                Kodas: <span class="font-mono">{{ group.code }}</span> | Sukūrė: {{ group.creator.username|default:"(nežinomas)" }} | Sukurta: {{ group.created_at|date:"Y-m-d" }}
+                            </p>
+                             {# <<< PRADŽIA: Žaidimų kūrimo statusas >>> #}
+                             <p class="text-xs mt-1">
+                                Žaidimų kūrimas:
+                                {% if group.can_create_games %}
+                                    <span class="font-medium text-green-600 dark:text-green-400">Leidžiama</span>
+                                {% else %}
+                                    <span class="font-medium text-red-600 dark:text-red-400">Uždrausta</span>
+                                {% endif %}
+                            </p>
+                             {# <<< PABAIGA >>> #}
+                        </div>
+                        {# Mygtukai #}
+                        <div class="ml-4 flex-shrink-0 flex flex-wrap items-center gap-2"> {# Pridėtas flex-wrap #}
+                             {# <<< PRADŽIA: Perjungimo mygtukas >>> #}
+                              <form action="{% url 'toggle_game_creation' group_code=group.code %}" method="POST" class="inline-block">
+                                 {% csrf_token %}
+                                 <button type="submit"
+                                         title="{% if group.can_create_games %}Uždrausti žaidimų kūrimą{% else %}Leisti žaidimų kūrimą{% endif %}"
+                                         class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded-md shadow-sm text-white
+                                                {% if group.can_create_games %} bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500 {% else %} bg-green-600 hover:bg-green-700 focus:ring-green-500 {% endif %}
+                                                focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                                     {% if group.can_create_games %}
+                                        <i data-lucide="x-circle" class="w-3 h-3"></i> {# Ikona uždraudimui #}
+                                     {% else %}
+                                         <i data-lucide="check-circle" class="w-3 h-3"></i> {# Ikona leidimui #}
+                                     {% endif %}
+                                 </button>
+                             </form>
+                            {# <<< PABAIGA >>> #}
+
+                            {# Administravimo mygtukas #}
+                             <a href="{% url 'group_admin' group_code=group.code %}" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+                                Administruoti
+                                <i data-lucide="arrow-right" class="ml-1 h-3 w-3"></i>
+                            </a>
+                             {# Trynimo mygtukas #}
+                             <form action="{% url 'delete_group' group_code=group.code %}" method="POST" class="inline-block"
+                                   onsubmit="return confirm('DĖMESIO! Ar tikrai norite ištrinti grupę \'{{ group.name|escapejs }}\' ({{ group.code }})? \n\nBUS IŠTRINTI VISI ŠIOS GRUPĖS ŽAIDIMAI, DAINOS, BALSAI IR NARYSTĖS ĮRAŠAI! \n\nŠis veiksmas neatšaukiamas.');">
+                                 {% csrf_token %}
+                                 <button type="submit"
+                                         title="Ištrinti grupę"
+                                         class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800">
+                                     <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                 </button>
+                             </form>
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        {# ... (pranešimas, jei grupių nėra) ... #}
+    {% endif %}
+</div>
+
+{# ... (Grįžimo nuoroda ir scripts blokas) ... #}
+{% endblock %}
+
+ {% block scripts %}
+    {{ block.super }}
+    <script>
+        // Inicializuoti Lucide ikonas
+        document.addEventListener('DOMContentLoaded', () => {
+             if (typeof lucide !== 'undefined') {
+                 lucide.createIcons();
+             }
+        });
+    </script>
+{% endblock %}

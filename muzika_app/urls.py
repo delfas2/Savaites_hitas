@@ -1,0 +1,30 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path("", views.landing_or_home_view, name="home"),
+    path("grupe/kurti/", views.create_group_page, name="create_group_page"),
+    path("grupe/saugoti/", views.save_group, name="save_group"),
+    path("grupe/<str:group_code>/admin/", views.group_admin_view, name="group_admin"),
+    path('grupe/<str:group_code>/change_role/<int:member_id>/', views.change_member_role, name='change_member_role'),
+    path("accounts/signup/", views.signup_view, name="signup"),
+    path("mano-grupes/", views.my_groups_view, name="my_groups"),
+    path("grupe/<str:group_code>/zaidimas/kurti/", views.create_game_view, name="create_game"),
+    path("grupe/<str:group_code>/zaidimas/<int:game_id>/prideti-daina/", views.add_song_view, name="add_song"),
+    path("grupe/prisijungti/", views.join_group_view, name="join_group"),
+    path("grupe/<str:group_code>/zaidimas/<int:game_id>/balsuoti/", views.vote_game_view, name="vote_game"),
+    path("grupe/<str:group_code>/zaidimas/<int:game_id>/pradeti-balsavima/", views.start_voting_view, name="start_voting"),
+    path("grupe/<str:group_code>/zaidimas/<int:game_id>/redaguoti/", views.edit_game_view, name="edit_game"),
+    path("grupe/<str:group_code>/zaidimai/", views.group_games_list_view, name="group_games_list"),
+    path("grupe/<str:group_code>/zaidimas/<int:game_id>/trinti/", views.delete_game_view, name="delete_game"),
+    path("grupe/<str:group_code>/zaidimas/<int:game_id>/daina/<int:song_id>/redaguoti/", views.edit_song_view, name="edit_song"),
+    path("grupe/<str:group_code>/zaidimas/<int:game_id>/detales/", views.game_details_view, name="game_details"),
+    path("grupe/<str:group_code>/zaidimas/<int:game_id>/skaiciuoti-rezultatus/", views.calculate_game_results_view, name="calculate_game_results"),
+    path("grupe/<str:group_code>/statistika/", views.statistics_view, name="group_statistics"),
+    path("grupe/<str:group_code>/zaidimas/<int:game_id>/balsavimo-rezultatai/", views.game_voting_results_view, name="game_voting_results"),
+    path("paskyra/redaguoti/", views.profile_edit_view, name="profile_edit"),
+    path("visos-grupes/", views.all_groups_view, name="all_groups_list"),
+    path("grupe/<str:group_code>/trinti/", views.delete_group_view, name="delete_group"),
+    path("grupe/<str:group_code>/admin/", views.group_admin_view, name="group_admin"),
+    path("grupe/<str:group_code>/perjungti-zaidimu-kurima/", views.toggle_game_creation_view, name="toggle_game_creation"),
+]

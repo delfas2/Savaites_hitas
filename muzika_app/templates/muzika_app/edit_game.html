@@ -1,0 +1,97 @@
+{# muzika_app/templates/muzika_app/edit_game.html #}
+{% extends 'muzika_app/base.html' %}
+
+{% block title %}Redaguoti Žaidimą{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">
+    Redaguoti Žaidimą
+</h1>
+<p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
+    Žaidimas: <span class="font-semibold">{{ game.name }}</span> (Grupė: {{ group.name }})
+</p>
+
+{# Rodyti pranešimus #}
+{% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+             <div class="p-3 rounded-md {% if message.tags == 'success' %} bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 {% elif message.tags == 'error' %} bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 {% else %} bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 {% endif %}" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div class="p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
+    <form action="{% url 'edit_game' group_code=group.code game_id=game.id %}" method="POST">
+        {% csrf_token %}
+
+        {# Atvaizduojame formos laukus. Naudojam form.as_p paprastumui arba galima detaliai #}
+        <div class="space-y-4">
+            {# Naudojant form.as_p: #}
+            {# {{ form.as_p }} #}
+
+            {# Arba detaliau kiekvieną lauką: #}
+             <div>
+                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ form.name.label }}</label>
+                {{ form.name }}
+                {% if form.name.errors %}<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.name.errors|striptags }}</p>{% endif %}
+                {% if form.name.help_text %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ form.name.help_text|safe }}</p>{% endif %}
+            </div>
+             <div>
+                <label for="{{ form.submission_start_date.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ form.submission_start_date.label }}</label>
+                {{ form.submission_start_date }}
+                {% if form.submission_start_date.errors %}<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.submission_start_date.errors|striptags }}</p>{% endif %}
+                 {% if form.submission_start_date.help_text %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ form.submission_start_date.help_text|safe }}</p>{% endif %}
+            </div>
+             <div>
+                <label for="{{ form.submission_end_date.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ form.submission_end_date.label }}</label>
+                {{ form.submission_end_date }}
+                {% if form.submission_end_date.errors %}<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.submission_end_date.errors|striptags }}</p>{% endif %}
+                 {% if form.submission_end_date.help_text %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ form.submission_end_date.help_text|safe }}</p>{% endif %}
+            </div>
+            <hr class="my-4 border-gray-200 dark:border-gray-600"> {# Skyriklis tarp datų grupių #}
+             <div>
+                <label for="{{ form.voting_start_date.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ form.voting_start_date.label }}</label>
+                {{ form.voting_start_date }}
+                {% if form.voting_start_date.errors %}<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.voting_start_date.errors|striptags }}</p>{% endif %}
+                 {% if form.voting_start_date.help_text %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ form.voting_start_date.help_text|safe }}</p>{% endif %}
+            </div>
+             <div>
+                <label for="{{ form.voting_end_date.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ form.voting_end_date.label }}</label>
+                {{ form.voting_end_date }}
+                {% if form.voting_end_date.errors %}<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.voting_end_date.errors|striptags }}</p>{% endif %}
+                 {% if form.voting_end_date.help_text %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ form.voting_end_date.help_text|safe }}</p>{% endif %}
+            </div>
+
+             {# Rodo bendras formos klaidas (pvz., dėl datų sekos) #}
+             {% if form.non_field_errors %}
+                <div class="p-3 mt-4 rounded-md bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        {# Mygtukai #}
+        <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-600 flex justify-end gap-3">
+            <a href="{% url 'group_admin' group_code=group.code %}" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-100 font-medium rounded-md shadow-sm hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-700 transition duration-150 ease-in-out">
+                Atšaukti
+            </a>
+            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white font-medium rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-700 transition duration-150 ease-in-out">
+                <i data-lucide="save" class="inline-block w-4 h-4 mr-1 -ml-1"></i> Išsaugoti Pakeitimus
+            </button>
+        </div>
+    </form>
+</div>
+
+{# Lucide ikonų inicializavimas mygtukui #}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+         if (typeof lucide !== 'undefined') {
+             lucide.createIcons();
+         }
+     });
+</script>
+{% endblock %}

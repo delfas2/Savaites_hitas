@@ -1,0 +1,90 @@
+{# muzika_app/templates/muzika_app/add_song.html #}
+{% extends 'muzika_app/base.html' %}
+
+{% block title %}Įkelti Dainą{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">
+    Įkelti Dainą
+</h1>
+<p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
+    Žaidimui: <span class="font-semibold">{{ game.name }}</span> (Grupė: {{ group.name }})
+</p>
+
+{# Rodyti pranešimus (pvz., sėkmės, klaidos) #}
+{% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+            <div class="p-3 rounded-md {% if message.tags == 'success' %} bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 {% elif message.tags == 'error' %} bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 {% else %} bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 {% endif %}" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div class="p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
+    {% if can_submit %}
+        {# Rodome formą, nes kėlimas leidžiamas #}
+        <form action="{% url 'add_song' group_code=group.code game_id=game.id %}" method="POST">
+            {% csrf_token %}
+            <div class="space-y-4">
+                {# Dainos pavadinimas #}
+                <div>
+                    <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ form.title.label }}</label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.title.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+                {# YouTube nuoroda #}
+                 <div>
+                    <label for="{{ form.youtube_url.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ form.youtube_url.label }}</label>
+                    {{ form.youtube_url }}
+                    {% if form.youtube_url.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.youtube_url.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+                 {# Rodo bendras formos klaidas #}
+                 {% if form.non_field_errors %}
+                    <div class="p-3 rounded-md bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200">
+                        {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                 {% endif %}
+            </div>
+
+             {# Mygtukai #}
+            <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-600 flex justify-end gap-3">
+                <a href="{% url 'group_admin' group_code=group.code %}" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-100 font-medium rounded-md shadow-sm hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-700 transition duration-150 ease-in-out">
+                    Atšaukti
+                </a>
+                <button type="submit" class="px-4 py-2 bg-teal-600 text-white font-medium rounded-md shadow-sm hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-700 transition duration-150 ease-in-out">
+                     <i data-lucide="upload-cloud" class="inline-block w-4 h-4 mr-1 -ml-1"></i> Įkelti Dainą
+                </button>
+            </div>
+        </form>
+
+    {% else %}
+        {# Rodome pranešimą, kodėl negalima kelti #}
+        <div class="text-center py-6">
+             <i data-lucide="calendar-x" class="w-12 h-12 mx-auto text-yellow-500 dark:text-yellow-400 mb-4"></i>
+             <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100">Dainų kėlimas negalimas</h3>
+             <p class="mt-2 text-gray-600 dark:text-gray-400">
+                 {{ reason|default:"Dainų kėlimas šiam žaidimui šiuo metu yra sustabdytas arba dar neprasidėjo." }}
+             </p>
+             <div class="mt-6">
+                 <a href="{% url 'group_admin' group_code=group.code %}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                    &larr; Grįžti į grupės puslapį
+                </a>
+             </div>
+        </div>
+    {% endif %}
+</div>
+
+{# Lucide ikonų inicializavimas (jei reikia mygtuke) #}
+<script>
+     // Gali prireikti lucide.createIcons();
+</script>
+
+{% endblock %}

@@ -1,0 +1,32 @@
+{# muzika_app/templates/muzika_app/home.html #}
+{% extends 'muzika_app/base.html' %}
+{% comment %}
+    Šis puslapis dabar turėtų būti automatiškai peradresuojamas
+    į 'my_groups' arba konkrečios grupės admin puslapį.
+    Paliekamas tik karkasas.
+{% endcomment %}
+
+{% block title %}Pagrindinis{% endblock %}
+
+{% block content %}
+    {# Rodyti pranešimus, jei vartotojas čia nukreipiamas su pranešimu #}
+    {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                 <div class="p-3 rounded-md {% if message.tags == 'success' %} bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 {% elif message.tags == 'error' %} bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 {% else %} bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 {% endif %}" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">Sveiki atvykę!</h1>
+    <p class="text-gray-600 dark:text-gray-300">Jūs būsite netrukus nukreipti...</p>
+
+    {# --- SENASIS GRUPĖS VEIKSMŲ BLOKAS IR MODALINIS LANGAS PAŠALINTI --- #}
+
+{% endblock %}
+
+{% block scripts %}
+{# Senasis modalinio lango JS kodas pašalintas #}
+{% endblock %}

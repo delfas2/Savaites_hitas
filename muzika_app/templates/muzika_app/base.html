@@ -1,0 +1,126 @@
+{% comment %} /Users/justinaszamarys/Library/Mobile Documents/com~apple~CloudDocs/_Python_duomenys/Muzika/muzika/muzika_app/templates/muzika_app/base.html {% endcomment %}
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Savaitės Hit'as{% endblock %}</title>
+    {# Tailwind CSS iš CDN #}
+    <script src="https://cdn.tailwindcss.com"></script>
+    {# Lucide Icons iš CDN #}
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    {# PAŠALINTAS PROBLEMINIS SCRIPT BLOKAS IŠ ČIA #}
+    <style>
+        /* Papildomi minimalūs stiliai */
+        body {
+            display: flex; /* Naudojame flexbox pagrindiniam išdėstymui */
+        }
+        /* Užtikriname, kad šoninis meniu užimtų visą aukštį */
+        .h-screen-minus-header { /* Pervadinta, kad būtų aiškiau */
+             height: 100vh;
+        }
+
+        /* Galima pridėti Inter šriftą per Google Fonts arba palikti numatytąjį */
+        /* @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; } */
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-800">
+
+    {# ŠONINĖ JUOSTA (SIDEBAR) #}
+    <aside class="flex flex-col w-64 h-screen px-5 py-8 overflow-y-auto bg-indigo-700 dark:bg-indigo-900 border-r rtl:border-r-0 rtl:border-l border-indigo-800 dark:border-indigo-700 flex-shrink-0">
+        {# Logo ir Pavadinimas #}
+        <a href="{% url 'home' %}" class="flex items-center mb-8">
+            <i data-lucide="music-2" class="w-6 h-6 text-white mr-2"></i>
+            <span class="text-xl font-semibold text-white">Savaitės Hit'as</span>
+        </a>
+
+        {# Navigacija ir Vartotojo blokas #}
+        <div class="flex flex-col justify-between flex-1 mt-6">
+            <nav class="-mx-3 space-y-6 ">
+                {# Navigacijos sekcija #}
+                <div class="space-y-3 ">
+                    <label class="px-3 text-xs text-indigo-200 uppercase dark:text-indigo-300">Navigacija</label>
+                    <a class="flex items-center px-3 py-2 text-indigo-100 ... {% if request.resolver_match.url_name == 'home' %} ... {% endif %}" href="{% url 'home' %}">
+                        <i data-lucide="home" class="w-5 h-5"></i>
+                        <span class="mx-2 text-sm font-medium">Pagrindinis</span>
+                    </a>
+                    
+                    {% if user.is_authenticated %}
+                    <a class="flex items-center px-3 py-2 text-indigo-100 ... {% if request.resolver_match.url_name == 'my_groups' %} ... {% endif %}" href="{% url 'my_groups' %}">
+                        <i data-lucide="users" class="w-5 h-5"></i>
+                        <span class="mx-2 text-sm font-medium">Mano grupės</span>
+                    </a>
+                    {% endif %}
+
+                </div>
+                {# Kita sekcija #}
+                <div class="space-y-3 ">
+                    <label class="px-3 text-xs text-indigo-200 uppercase dark:text-indigo-300">Paskyra</label> {# Pakeista etiketė #}
+                   {# <<< Pakeista Nustatymų nuoroda į Profilio redagavimą >>> #}
+                   <a class="flex items-center px-3 py-2 text-indigo-100 transition-colors duration-300 transform rounded-lg dark:text-indigo-200 hover:bg-indigo-600 dark:hover:bg-indigo-800 hover:text-white dark:hover:text-gray-100 {% if request.resolver_match.url_name == 'profile_edit' %} bg-indigo-600 dark:bg-indigo-800 text-white {% endif %}" href="{% url 'profile_edit' %}">
+                       <i data-lucide="user-cog" class="w-5 h-5"></i> {# Pakeista ikona #}
+                       <span class="mx-2 text-sm font-medium">Redaguoti Paskyrą</span> {# Pakeistas tekstas #}
+                   </a>
+                    <a class="flex items-center px-3 py-2 text-indigo-100 ... " href="#"> {# Pakeiskite '#' į realius URL #}
+                       <i data-lucide="info" class="w-5 h-5"></i>
+                       <span class="mx-2 text-sm font-medium">Apie</span>
+                   </a>
+               </div>
+            </nav> {# Navigacijos pabaiga #}
+
+            {# <<< VARTOTOJO BLOKAS APAČIOJE (TIK PRISIJUNGUSIAM) >>> #}
+            <div class="mt-6 pt-4 border-t border-indigo-600 dark:border-indigo-700">
+                {% if user.is_authenticated %}
+                    {# Tik prisijungusiam vartotojui #}
+                    <div class="flex items-center px-3 py-2 mb-2">
+                        <i data-lucide="user-circle-2" class="w-6 h-6 text-indigo-200 mr-2 flex-shrink-0"></i>
+                        {# <<< PRADŽIA: Pakeista eilutė vardui rodyti >>> #}
+                        <span class="text-sm font-medium text-white truncate" title="{{ user.get_full_name|default:user.username }}">
+                            Sveiki, {{ user.get_full_name|default:user.username }}
+                        </span>
+                        {# <<< PABAIGA: Pakeista eilutė >>> #}
+                    </div>
+                     <a href="{% url 'logout' %}" class="flex items-center px-3 py-2 text-indigo-100 transition-colors duration-300 transform rounded-lg dark:text-indigo-200 hover:bg-indigo-600 dark:hover:bg-indigo-800 hover:text-white dark:hover:text-gray-100">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
+                        <span class="mx-2 text-sm font-medium">Atsijungti</span>
+                    </a>
+                {% endif %}
+            </div>
+            {# <<< Vartotojo bloko pabaiga >>> #}
+
+        </div> {# Flex-1 div pabaiga #}
+    </aside> {# Šoninės juostos pabaiga #}
+
+    {# PAGRINDINIS TURINYS #}
+    <main class="flex-1 p-6 overflow-y-auto">
+        {% block content %}
+            {# Numatytasis turinys, jei blokas 'content' neperrašytas #}
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Sveiki atvykę!</h1>
+            <p class="mt-2 text-gray-600 dark:text-gray-300">Čia bus rodomas pagrindinis puslapio turinys.</p>
+        {% endblock %}
+    </main> {# Pagrindinio turinio pabaiga #}
+
+    {# <<< PRIDĖTAS BLOKAS PAPILDOMIEMS SKRIPTAMS >>> #}
+    {% block scripts %}
+        {# Čia bus įterptas JavaScript kodas iš praplėčiančių šablonų, pvz., home.html #}
+    {% endblock scripts %}
+    {# <<< BLOKO PABAIGA >>> #}
+
+    {# <<< LUCIDE IKONŲ INICIALIZAVIMAS PERKELTAS PO SCRIPTS BLOKO >>> #}
+    <script>
+      try {
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+          // console.log("Lucide icons initialized from base.html"); // Debug pranešimas
+        } else {
+          console.error("Lucide library not fully loaded before attempting icon initialization in base.html.");
+        }
+      } catch (error) {
+        console.error("Error initializing Lucide icons in base.html:", error);
+      }
+    </script>
+    {# <<< INICIALIZAVIMO PABAIGA >>> #}
+
+</body>
+</html>

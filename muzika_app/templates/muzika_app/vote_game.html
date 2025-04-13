@@ -1,0 +1,208 @@
+{# muzika_app/templates/muzika_app/vote_game.html #}
+{% extends 'muzika_app/base.html' %}
+{% load embed_video_tags %} {# <<< Užkraunam django-embed-video žymas #}
+
+{% block title %}Balsavimas: {{ game.name }}{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">
+    Balsavimas: {{ game.name }}
+</h1>
+<p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
+    Grupė: {{ group.name }}
+</p>
+
+{# Rodyti pranešimus #}
+{% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+             <div class="p-3 rounded-md {% if message.tags == 'success' %} bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 {% elif message.tags == 'error' %} bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 {% else %} bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 {% endif %}" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div class="p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
+    {% if is_voting_time %} {# Naudojam kintamąjį perduotą iš view #}
+        {# Balsavimas Aktyvus #}
+        <p class="mb-4 text-gray-700 dark:text-gray-300">Pasirinkite tris labiausiai patikusias dainas (išskyrus savo) ir skirkite joms 3, 2 ir 1 tašką. Kiekvieną dainą galima pasirinkti tik vienam taškų skaičiui.</p>
+
+        <form id="vote-form" action="{% url 'vote_game' group_code=group.code game_id=game.id %}" method="POST">
+            {% csrf_token %}
+
+            {# --- TAŠKŲ PASIRINKIMO BLOKAI --- #}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                {# 3 Taškai #}
+                <div class="p-4 border border-indigo-300 dark:border-indigo-700 rounded-lg bg-indigo-50 dark:bg-gray-800">
+                    <label for="points_3_select" class="block text-lg font-semibold text-indigo-800 dark:text-indigo-200 mb-2">🥇 3 Taškai</label>
+                    <select name="points_3" id="points_3_select" required
+                            class="block w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 dark:text-gray-100 vote-select">
+                        {# Tikriname ar buvo klaida ir yra submitted_data, ar yra existing_votes_map #}
+                        <option value="" {% if not existing_votes_map.3 and not submitted_data.points_3 %}selected{% endif %} disabled>-- Pasirinkite dainą --</option>
+                        {% for song in songs %}
+                        <option value="{{ song.id }}" {% if existing_votes_map.3 == song.id or submitted_data.points_3 == song.id|stringformat:"i" %}selected{% endif %}>
+                            {{ song.title }} ({{ song.submitted_by.username }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                 {# 2 Taškai #}
+                <div class="p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800">
+                     <label for="points_2_select" class="block text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">🥈 2 Taškai</label>
+                    <select name="points_2" id="points_2_select" required
+                            class="block w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 dark:text-gray-100 vote-select">
+                        <option value="" {% if not existing_votes_map.2 and not submitted_data.points_2 %}selected{% endif %} disabled>-- Pasirinkite dainą --</option>
+                         {% for song in songs %}
+                        <option value="{{ song.id }}" {% if existing_votes_map.2 == song.id or submitted_data.points_2 == song.id|stringformat:"i" %}selected{% endif %}>
+                            {{ song.title }} ({{ song.submitted_by.username }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                 {# 1 Taškas #}
+                 <div class="p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800">
+                     <label for="points_1_select" class="block text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">🥉 1 Taškas</label>
+                    <select name="points_1" id="points_1_select" required
+                            class="block w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 dark:text-gray-100 vote-select">
+                        <option value="" {% if not existing_votes_map.1 and not submitted_data.points_1 %}selected{% endif %} disabled>-- Pasirinkite dainą --</option>
+                         {% for song in songs %}
+                        <option value="{{ song.id }}" {% if existing_votes_map.1 == song.id or submitted_data.points_1 == song.id|stringformat:"i" %}selected{% endif %}>
+                            {{ song.title }} ({{ song.submitted_by.username }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <p id="vote-validation-error" class="text-sm text-red-600 dark:text-red-400 mb-4 hidden">Klaida: Ta pati daina negali gauti kelių skirtingų taškų skaičių.</p>
+
+            {# --- DAINŲ SĄRAŠAS SU GROTUVAIS (ATNAUJINTAS PAGAL PASKUTINIUS PAKEITIMUS) --- #}
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mt-8 mb-4">Dainos vertinimui:</h3>
+            <div class="space-y-4"> 
+                {% for song in songs %}
+                    {# Visos dainos blokas #}
+                    <div class="flex flex-col md:flex-row gap-3 p-3 border rounded-lg dark:border-gray-600 bg-white dark:bg-gray-700/30 hover:shadow-md transition-shadow duration-200"> 
+                        
+                        {# YouTube Grotuvas - Grąžinta aspect-video, padidintas plotis md ekranuose #}
+                        <div class="w-full md:w-1/3 flex-shrink-0 aspect-video border border-gray-300 dark:border-gray-600 rounded shadow-sm p-1 bg-black/5 dark:bg-black/10 overflow-hidden"> {# <<< Pakeistas md:w-1/4 į md:w-1/3, pridėta aspect-video ir overflow-hidden >>> #}
+                             {% video song.youtube_url %} {# Be dydžio parametro #}
+                        </div>
+                        {# <<< PABAIGA: YouTube Grotuvas >>> #}
+
+                        {# Dainos Informacija #}
+                        <div class="flex-grow mt-2 md:mt-0 md:pl-3"> 
+                            <h4 class="text-lg font-semibold text-gray-900 dark:text-white leading-tight">{{ song.title }}</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Įkėlė: {{ song.submitted_by.username }}</p> 
+                            <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Data: {{ song.submitted_at|date:"Y-m-d H:i" }}</p>
+                            {# Nuoroda į originalą #}
+                            <a href="{{ song.youtube_url }}" target="_blank" rel="noopener noreferrer"
+                               class="text-xs text-blue-500 hover:underline mt-2 inline-block break-all">
+                               Žiūrėti YouTube <i data-lucide="external-link" class="inline-block w-3 h-3 -mt-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-gray-500 dark:text-gray-400">Šiame žaidime nėra dainų, už kurias galėtumėte balsuoti (arba visos yra jūsų).</p>
+                {% endfor %}
+            </div>
+            {# --- DAINŲ SĄRAŠO PABAIGA --- #}
+
+
+            {# Mygtukai #}
+            <div class="mt-8 pt-4 border-t border-gray-200 dark:border-gray-600 flex justify-end gap-3">
+                 <a href="{% url 'group_admin' group_code=group.code %}" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-100 font-medium rounded-md shadow-sm hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-700 transition duration-150 ease-in-out">
+                    Atšaukti
+                </a>
+                 <button type="submit" id="submit-vote-button" class="px-4 py-2 bg-blue-600 text-white font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-700 transition duration-150 ease-in-out">
+                     <i data-lucide="send" class="inline-block w-4 h-4 mr-1 -ml-1"></i> Pateikti Balsus
+                </button>
+            </div>
+
+        </form>
+
+    {% else %}
+        {# Balsavimas Neaktyvus #}
+         <div class="text-center py-6">
+             <i data-lucide="calendar-clock" class="w-12 h-12 mx-auto text-orange-500 dark:text-orange-400 mb-4"></i>
+             <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100">Balsavimas šiuo metu neaktyvus</h3>
+             <p class="mt-2 text-gray-600 dark:text-gray-400">
+                 {{ reason_not_active|default:"Balsavimas šiam žaidimui dar neprasidėjo arba jau pasibaigė." }}
+             </p>
+             <div class="mt-6">
+                 <a href="{% url 'group_admin' group_code=group.code %}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                    ← Grįžti į grupės puslapį
+                </a>
+             </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }} {# Įtraukiam skriptus iš base.html, jei tokių būtų #}
+<script>
+// <<< JavaScript kodas balsavimo validacijai lieka toks pat >>>
+document.addEventListener('DOMContentLoaded', function() {
+    const voteForm = document.getElementById('vote-form');
+    const selects = voteForm ? voteForm.querySelectorAll('select.vote-select') : [];
+    const errorMsg = document.getElementById('vote-validation-error');
+    const submitButton = document.getElementById('submit-vote-button');
+
+    function validateVotes() {
+        const selectedValues = new Set();
+        let isValid = true;
+        let selectionsMade = 0; 
+
+        selects.forEach(select => {
+            if (select.value) { 
+                selectionsMade++;
+                if (selectedValues.has(select.value)) {
+                    isValid = false; 
+                }
+                selectedValues.add(select.value);
+            }
+        });
+
+        if (!isValid) {
+            errorMsg.classList.remove('hidden');
+        } else {
+            errorMsg.classList.add('hidden');
+        }
+        return isValid; 
+    }
+
+    if (voteForm && selects.length > 0 && errorMsg && submitButton) {
+        selects.forEach(select => {
+            select.addEventListener('change', validateVotes);
+        });
+        validateVotes(); 
+
+        voteForm.addEventListener('submit', function(event) {
+            if (!validateVotes()) {
+                console.log("Frontend validation failed: Same song selected multiple times.");
+                event.preventDefault(); 
+                alert("Klaida: Negalite tai pačiai dainai skirti kelių skirtingų taškų skaičių. Prašome pataisyti pasirinkimus.");
+                return; 
+            }
+            let allSelected = true;
+            selects.forEach(select => {
+                if (!select.value) {
+                    allSelected = false;
+                }
+            });
+
+            if (!allSelected) {
+                 console.log("Frontend validation failed: Not all points assigned.");
+                 event.preventDefault(); 
+                 alert("Klaida: Turite priskirti visus tris taškus (3, 2 ir 1) skirtingoms dainoms.");
+            }
+        });
+    }
+
+    // Inicializuojam Lucide ikonas 
+    if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+     }
+});
+</script>
+{% endblock %}

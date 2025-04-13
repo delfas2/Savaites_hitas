@@ -1,0 +1,73 @@
+{# muzika_app/templates/muzika_app/statistics.html #}
+{% extends 'muzika_app/base.html' %}
+
+{% block title %}Statistika: {{ group.name }}{% endblock %} {# Rodo grupės pavadinimą #}
+
+{% block content %}
+<h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+    Grupės "{{ group.name }}" Statistika {# Rodo grupės pavadinimą #}
+</h1>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    {# --- Daugiausiai laimėjimų --- #}
+    <div class="p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
+        <h2 class="text-xl font-semibold text-gray-700 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-600 pb-2">
+            <i data-lucide="award" class="inline-block w-5 h-5 mr-1 text-yellow-500 -mt-1"></i> Daugiausiai Laimėjimų Grupėje
+        </h2>
+        {% if top_winners %}
+            <ol class="list-decimal list-inside space-y-2">
+                {% for user_stat in top_winners %}
+                    <li class="text-sm {% if forloop.first %}font-semibold text-lg{% endif %}">
+                       <span class="font-medium text-gray-900 dark:text-gray-100"> {{ user_stat.get_full_name|default:user_stat.username }}</span>
+                       - <span class="text-gray-600 dark:text-gray-300">{{ user_stat.num_wins }} {% if user_stat.num_wins == 1 %}laimėjimas{% elif user_stat.num_wins > 1 and user_stat.num_wins < 10 %}laimėjimai{% else %}laimėjimų{% endif %}</span>
+                    </li>
+                {% endfor %}
+            </ol>
+        {% else %}
+            <p class="text-sm text-gray-500 dark:text-gray-400 italic">Šioje grupėje kol kas nėra duomenų apie laimėtojus.</p>
+        {% endif %}
+    </div>
+
+    {# --- Daugiausiai taškų (Gautų) --- #}
+    <div class="p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
+        <h2 class="text-xl font-semibold text-gray-700 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-600 pb-2">
+            <i data-lucide="star" class="inline-block w-5 h-5 mr-1 text-orange-500 -mt-1"></i> Taškų Reitingas Grupėje (Gauti Taškai)
+        </h2>
+         {% if points_ranking %}
+            <ol class="list-decimal list-inside space-y-2">
+                {% for user_stat in points_ranking %}
+                    <li class="text-sm {% if forloop.first %}font-semibold text-lg{% endif %}">
+                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ user_stat.get_full_name|default:user_stat.username }}</span>
+                         {# Naudojam 'total_score_received' ir 'score_ending' iš context #}
+                         - <span class="text-gray-600 dark:text-gray-300">{{ user_stat.total_score_received }} {{ user_stat.score_ending }}</span>
+                    </li>
+                {% endfor %}
+            </ol>
+        {% else %}
+            <p class="text-sm text-gray-500 dark:text-gray-400 italic">Šioje grupėje kol kas nėra duomenų apie gautus taškus.</p>
+        {% endif %}
+    </div>
+
+</div>
+
+{# Grįžimo nuoroda #}
+<div class="mt-8">
+    <a href="{% url 'group_admin' group_code=group.code %}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+        &larr; Grįžti į grupės administravimą
+    </a>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+    // Inicializuoti ikonas
+    document.addEventListener('DOMContentLoaded', () => {
+         if (typeof lucide !== 'undefined') {
+             lucide.createIcons();
+         }
+     });
+</script>
+{% endblock %}

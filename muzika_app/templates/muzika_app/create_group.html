@@ -1,0 +1,63 @@
+{# muzika_app/templates/muzika_app/create_group.html #}
+{% extends 'muzika_app/base.html' %}
+
+{% block title %}Sukurti Naują Grupę - Muzikos Projektas{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">Sukurti Naują Grupę</h1>
+
+{# Rodyti pranešimus (jei naudojate messages framework) #}
+{% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+            <div class="p-3 rounded-md {% if message.tags == 'success' %} bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 {% elif message.tags == 'error' %} bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 {% else %} bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 {% endif %}" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div class="p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
+    <p class="text-lg text-gray-700 dark:text-gray-200 mb-4">
+        Jūsų naujos grupės unikalus prisijungimo kodas:
+    </p>
+    <p class="text-4xl font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-gray-100 dark:bg-gray-800 p-4 rounded-md inline-block mb-6 tracking-widest">
+        {{ code }}
+    </p>
+    <p class="text-gray-600 dark:text-gray-400 mb-6">
+        Šį kodą galėsite duoti kitiems nariams, kad jie galėtų prisijungti prie jūsų grupės. Įveskite grupės pavadinimą ir, jei norite, papildomą informaciją.
+    </p>
+
+    <form action="{% url 'save_group' %}" method="POST">
+        {% csrf_token %}
+        {# Perduodame kodą per paslėptą lauką #}
+        <input type="hidden" name="code" value="{{ code }}">
+
+        {# Atvaizduojame formos laukus (galima naudoti {{ form.as_p }} arba atskirus laukus) #}
+        <div class="mb-4">
+            <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ form.name.label }}</label>
+            {{ form.name }}
+            {% if form.name.errors %}
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.name.errors|striptags }}</p>
+            {% endif %}
+        </div>
+
+        <div class="mb-6">
+            <label for="{{ form.information.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ form.information.label }}</label>
+            {{ form.information }}
+             {% if form.information.errors %}
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.information.errors|striptags }}</p>
+            {% endif %}
+        </div>
+
+        <div class="flex justify-end">
+            <a href="{% url 'home' %}" class="px-5 py-2 mr-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-100 font-medium rounded-md shadow-sm hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-700 transition duration-150 ease-in-out">
+                Atšaukti
+            </a>
+            <button type="submit" class="px-5 py-2 bg-emerald-600 text-white font-medium rounded-md shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-700 transition duration-150 ease-in-out">
+                Sukurti Grupę
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

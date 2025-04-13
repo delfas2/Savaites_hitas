@@ -1,0 +1,28 @@
+{# muzika_app/templates/muzika_app/auth_base.html #}
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Muzikos Projektas{% endblock %}</title>
+    {# Tailwind CSS iš CDN #}
+    <script src="https://cdn.tailwindcss.com"></script>
+    {# Galima pridėti kitų bendrų stilių ar JS, reikalingų TIK auth puslapiams #}
+    <style>
+        /* Pavyzdžiui, specifinis fonas auth puslapiams */
+        body {
+            /* Pakeiskite į norimą foną */
+             /* background-color: #f0f2f5; */
+             font-family: sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-screen">
+    {# Pagrindinis turinio blokas, kurį užpildys login.html ir signup.html #}
+    <main class="w-full max-w-md mx-auto p-4">
+         {% block content %}
+            {# Čia bus įterptas prisijungimo arba registracijos formos turinys #}
+         {% endblock %}
+    </main>
+</body>
+</html>

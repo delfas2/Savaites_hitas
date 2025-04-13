@@ -1,0 +1,126 @@
+{# muzika_app/templates/muzika_app/profile_edit.html #}
+{% extends 'muzika_app/base.html' %}
+
+{% block title %}Redaguoti Paskyrą{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+    Redaguoti Paskyrą
+</h1>
+
+{# Rodyti pranešimus #}
+{% if messages %}
+    {# ... pranešimų rodymas ... #}
+    <div class="mb-6">
+        {% for message in messages %}
+            <div class="p-3 rounded-md {% if message.tags == 'success' %} bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 {% elif message.tags == 'error' %} bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 {% else %} bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 {% endif %}" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    {# --- Profilio Duomenų Forma --- #}
+    <div class="p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
+        <h2 class="text-xl font-semibold text-gray-700 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-600 pb-2">
+            Profilio Duomenys
+        </h2>
+        <form action="{% url 'profile_edit' %}" method="POST" class="space-y-4">
+            {% csrf_token %}
+
+            {% if profile_form.non_field_errors %}
+                <div class="p-3 rounded-md bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200">
+                    {% for error in profile_form.non_field_errors %} <p>{{ error }}</p> {% endfor %}
+                </div>
+            {% endif %}
+
+            {# --- PAKEITIMAS: Nebereikia rankinio username rodymo --- #}
+
+            {# Dabar ciklas atvaizduos visus formos laukus, įskaitant username #}
+            {% for field in profile_form %}
+                <div>
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ field.label }}</label>
+                    {{ field }} {# Naudos widget'ą apibrėžtą formoje #}
+                    {% if field.help_text %}
+                      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ field.help_text|safe }}</p>
+                    {% endif %}
+                    {% if field.errors %}
+                      <div class="mt-1 text-sm text-red-600 dark:text-red-400">
+                          {% for error in field.errors %} <p>{{ error }}</p> {% endfor %}
+                      </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            {# Mygtukas profilio duomenims išsaugoti #}
+            <div class="pt-2">
+                <button type="submit" name="update_profile" class="w-full inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-700">
+                    <i data-lucide="save" class="w-4 h-4 mr-2"></i> Išsaugoti Profilio Duomenis
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {# --- Slaptažodžio Keitimo Forma --- #}
+    <div class="p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
+        {# ... (Slaptažodžio keitimo forma lieka nepakitusi) ... #}
+         <h2 class="text-xl font-semibold text-gray-700 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-600 pb-2">
+            Pakeisti Slaptažodį
+        </h2>
+        <form action="{% url 'profile_edit' %}" method="POST" class="space-y-4">
+            {% csrf_token %}
+             {% if password_form.non_field_errors %}
+                <div class="p-3 rounded-md bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200">
+                    {% for error in password_form.non_field_errors %} <p>{{ error }}</p> {% endfor %}
+                </div>
+            {% endif %}
+            {# Senas slaptažodis #}
+            <div>
+                <label for="{{ password_form.old_password.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ password_form.old_password.label }}</label>
+                <input type="password" name="{{ password_form.old_password.name }}" id="{{ password_form.old_password.id_for_label }}" required
+                       class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 dark:text-gray-100">
+                {% if password_form.old_password.help_text %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ password_form.old_password.help_text|safe }}</p>{% endif %}
+                {% if password_form.old_password.errors %}<div class="mt-1 text-sm text-red-600 dark:text-red-400">{% for error in password_form.old_password.errors %} <p>{{ error }}</p> {% endfor %}</div>{% endif %}
+            </div>
+            {# Naujas slaptažodis #}
+             <div>
+                <label for="{{ password_form.new_password1.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ password_form.new_password1.label }}</label>
+                <input type="password" name="{{ password_form.new_password1.name }}" id="{{ password_form.new_password1.id_for_label }}" required autocomplete="new-password"
+                       class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 dark:text-gray-100">
+                {% if password_form.new_password1.help_text %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ password_form.new_password1.help_text|safe }}</p>{% endif %}
+                {% if password_form.new_password1.errors %}<div class="mt-1 text-sm text-red-600 dark:text-red-400">{% for error in password_form.new_password1.errors %} <p>{{ error }}</p> {% endfor %}</div>{% endif %}
+            </div>
+            {# Naujo slaptažodžio patvirtinimas #}
+             <div>
+                <label for="{{ password_form.new_password2.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ password_form.new_password2.label }}</label>
+                 <input type="password" name="{{ password_form.new_password2.name }}" id="{{ password_form.new_password2.id_for_label }}" required autocomplete="new-password"
+                       class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 dark:text-gray-100">
+                {% if password_form.new_password2.help_text %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ password_form.new_password2.help_text|safe }}</p>{% endif %}
+                {% if password_form.new_password2.errors %}<div class="mt-1 text-sm text-red-600 dark:text-red-400">{% for error in password_form.new_password2.errors %} <p>{{ error }}</p> {% endfor %}</div>{% endif %}
+            </div>
+             {# Mygtukas slaptažodžiui pakeisti #}
+             <div class="pt-2">
+                 <button type="submit" name="change_password" class="w-full inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 dark:focus:ring-offset-gray-700">
+                     <i data-lucide="key-round" class="w-4 h-4 mr-2"></i> Pakeisti Slaptažodį
+                 </button>
+             </div>
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{# ... (script blokas ikonoms lieka toks pat) ... #}
+{{ block.super }}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+         if (typeof lucide !== 'undefined') {
+             lucide.createIcons();
+         }
+     });
+</script>
+{% endblock %}
