@@ -8,20 +8,12 @@
 {% block content %}
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold text-gray-800 dark:text-white">
-        Žaidimai grupėje "{{ group.name }}"
-    </h1>    {# Mygtukas kurti žaidimą (tik adminui) #}
-    {% if is_current_user_admin %}
-        {% if can_create_game %}
+        Žaidimai grupėje "{{ group.name }}"    </h1>    {# Mygtukas kurti žaidimą (adminui arba paskutinio žaidimo laimėtojui) #}
+    {% if can_create_game %}
         <button type="button" onclick="openGameModal()" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white font-medium rounded-md shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-700 text-sm">
             <i class="fa-solid fa-plus mr-2"></i>
             Kurti naują žaidimą
         </button>
-        {% else %}
-        <a href="{% url 'create_game' group_code=group.code %}" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white font-medium rounded-md shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-700 text-sm">
-            <i class="fa-solid fa-plus mr-2"></i>
-            Kurti naują žaidimą
-        </a>
-        {% endif %}
     {% endif %}
 </div>
 

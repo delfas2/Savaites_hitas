@@ -9,6 +9,20 @@
     <p class="text-xs text-gray-400 mt-1">Grupė „{{ group.name }}“ — geriausi muzikos kuratoriai ir aktyvumas</p>
 </div>
 
+{# --- Tabų navigacija --- #}
+<div class="flex flex-wrap items-center gap-1 bg-gray-900/80 p-1.5 rounded-2xl border border-gray-800 mb-8 w-fit">
+    <button onclick="switchStatTab('honors')" id="stat-tab-honors" class="stat-tab-btn px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-brand-600 text-white shadow-md flex items-center gap-2">
+        <i class="fa-solid fa-trophy text-amber-300"></i> Garbės Lenta
+    </button>
+    <button onclick="switchStatTab('participation')" id="stat-tab-participation" class="stat-tab-btn px-4 py-2 rounded-xl text-xs font-semibold transition-all text-gray-400 hover:text-white hover:bg-gray-800/60 flex items-center gap-2">
+        <i class="fa-solid fa-chart-line text-emerald-300"></i> Dalyvavimas
+    </button>
+</div>
+
+{# ===================================================================== #}
+{# TAB: GARBĖS LENTA #}
+{# ===================================================================== #}
+<section id="stat-view-honors">
 {# --- Garbės lentos podiumas (Top 3 laimėtojai) --- #}
 {% if top_winners %}
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -16,7 +30,7 @@
         {% if forloop.counter == 1 %}
         <div class="glass-card rounded-3xl p-6 border border-amber-500/30 bg-gradient-to-b from-amber-500/10 to-transparent text-center relative overflow-hidden order-1 md:order-2">
             <div class="absolute -top-3 -right-3 w-16 h-16 bg-amber-500/20 rounded-full blur-xl"></div>
-            <div class="inline-flex p-3 bg-amber-500/20 text-amber-400 rounded-2xl mb-4 text-xl font-black">🏆 #1 Garbės Narys</div>
+            <div class="inline-flex p-3 bg-amber-500/20 text-amber-400 rounded-2xl mb-4 text-xl font-black">🏆 Maestro</div>
             <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-500 to-brand-pink flex items-center justify-center text-white text-2xl font-black mx-auto ring-4 ring-amber-500/50 mb-3 uppercase">{{ user_stat.get_full_name|default:user_stat.username|slice:":1" }}</div>
             <h3 class="font-extrabold text-white text-base">{{ user_stat.get_full_name|default:user_stat.username }}</h3>
             <p class="text-xs text-gray-400 mb-4">{{ group.name }}</p>
@@ -27,7 +41,7 @@
         </div>
         {% elif forloop.counter == 2 %}
         <div class="glass-card rounded-3xl p-6 border border-gray-700 text-center order-2 md:order-1">
-            <div class="inline-flex p-3 bg-gray-700/30 text-gray-300 rounded-2xl mb-4 text-xl font-black">🥈 #2 Garbės Narys</div>
+            <div class="inline-flex p-3 bg-gray-700/30 text-gray-300 rounded-2xl mb-4 text-xl font-black">🥈 Virtuozas</div>
             <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-gray-500 to-gray-700 flex items-center justify-center text-white text-2xl font-black mx-auto ring-4 ring-gray-400/30 mb-3 uppercase">{{ user_stat.get_full_name|default:user_stat.username|slice:":1" }}</div>
             <h3 class="font-extrabold text-white text-base">{{ user_stat.get_full_name|default:user_stat.username }}</h3>
             <p class="text-xs text-gray-400 mb-4">{{ group.name }}</p>
@@ -38,7 +52,7 @@
         </div>
         {% else %}
         <div class="glass-card rounded-3xl p-6 border border-amber-800/30 text-center order-3">
-            <div class="inline-flex p-3 bg-amber-900/30 text-amber-600 rounded-2xl mb-4 text-xl font-black">🥉 #3 Garbės Narys</div>
+            <div class="inline-flex p-3 bg-amber-900/30 text-amber-600 rounded-2xl mb-4 text-xl font-black">🥉 Melomanas</div>
             <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-700 to-amber-900 flex items-center justify-center text-white text-2xl font-black mx-auto ring-4 ring-amber-700/30 mb-3 uppercase">{{ user_stat.get_full_name|default:user_stat.username|slice:":1" }}</div>
             <h3 class="font-extrabold text-white text-base">{{ user_stat.get_full_name|default:user_stat.username }}</h3>
             <p class="text-xs text-gray-400 mb-4">{{ group.name }}</p>
@@ -92,13 +106,112 @@
                         <span class="font-mono font-bold text-brand-500">{{ user_stat.total_score_received }} {{ user_stat.score_ending }}</span>
                     </li>
                 {% endfor %}
-            </ol>
-        {% else %}
+            </ol>        {% else %}
             <p class="text-sm text-gray-500 italic">Šioje grupėje kol kas nėra duomenų apie gautus taškus.</p>
         {% endif %}
     </div>
 
 </div>
+</section>
+
+{# ===================================================================== #}
+{# TAB: DALYVAVIMAS #}
+{# ===================================================================== #}
+<section id="stat-view-participation" class="hidden space-y-6">
+
+    {# Suvestinės kortelės #}
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="glass-card rounded-3xl p-5 border border-gray-800">
+            <p class="text-[10px] font-semibold text-gray-400 uppercase">Užbaigti žaidimai</p>
+            <p class="text-2xl font-black text-white mt-1">{{ total_completed_games }}</p>
+        </div>
+        <div class="glass-card rounded-3xl p-5 border border-gray-800">
+            <p class="text-[10px] font-semibold text-gray-400 uppercase">Grupės nariai</p>
+            <p class="text-2xl font-black text-brand-400 mt-1">{{ total_members }}</p>
+        </div>
+        <div class="glass-card rounded-3xl p-5 border border-gray-800">
+            <p class="text-[10px] font-semibold text-gray-400 uppercase">Aktyviausio dalyvavimas</p>
+            <p class="text-2xl font-black text-emerald-400 mt-1">
+                {% if participation_ranking %}{{ participation_ranking.0.games_participated }}/{{ total_completed_games }}{% else %}—{% endif %}
+            </p>
+        </div>
+    </div>    {# Komandos aktyvumo grafikas #}
+    <div class="glass-card rounded-3xl p-6 border border-gray-800">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-1">
+            <div>
+                <h2 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-chart-column text-emerald-400"></i> Komandos Aktyvumas (paskutinės 30 savaičių)
+                </h2>
+                <p class="text-xs text-gray-400 mt-1 mb-1">Kiek narių dalyvavo kiekvieną savaitę (pateikė dainą arba balsavo)</p>
+            </div>
+            {# Perjungiklis: skaičius / procentai #}
+            <div class="inline-flex shrink-0 rounded-xl bg-gray-800/60 border border-gray-700 p-1 text-[11px] font-bold">
+                <button type="button" id="chart-mode-count" onclick="switchChartMode('count')" class="px-3 py-1.5 rounded-lg transition-all bg-emerald-600 text-white shadow">
+                    Skaičius
+                </button>
+                <button type="button" id="chart-mode-percent" onclick="switchChartMode('percent')" class="px-3 py-1.5 rounded-lg transition-all text-gray-400 hover:text-white">
+                    Procentai
+                </button>
+            </div>
+        </div>
+
+        {% if weekly_activity %}
+        <div class="overflow-x-auto pb-2 mt-4">
+            <div class="flex items-end gap-1.5 min-w-[640px] h-48 border-b border-gray-800 pb-1">
+                {% for week in weekly_activity %}
+                <div class="flex-1 flex flex-col items-center justify-end h-full group relative">
+                    {# Tooltip #}                    <div class="absolute -top-1 opacity-0 group-hover:opacity-100 transition pointer-events-none z-10 bg-gray-950 border border-gray-700 rounded-lg px-2 py-1 text-[10px] text-white whitespace-nowrap shadow-xl">
+                        {{ week.full_label }}: <strong class="text-emerald-400">{{ week.count }}</strong> iš {{ week.members }} narių (<strong class="text-emerald-400">{{ week.percent }}%</strong>)
+                    </div>
+                    <span class="text-[9px] text-gray-400 mb-1 font-mono chart-value" data-count="{{ week.count }}" data-percent="{{ week.percent }}">{{ week.count }}</span>
+                    <div class="w-full rounded-t-md bg-gradient-to-t from-emerald-600 to-emerald-400 hover:from-emerald-500 hover:to-emerald-300 transition-all chart-bar"
+                         data-count-height="{% if max_weekly > 0 %}{% widthratio week.count max_weekly 100 %}{% else %}0{% endif %}"
+                         data-percent-height="{{ week.percent }}"
+                         style="height: {% if max_weekly > 0 %}{% widthratio week.count max_weekly 100 %}{% else %}0{% endif %}%; min-height: {% if week.count > 0 %}4px{% else %}2px{% endif %};"></div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="flex gap-1.5 min-w-[640px] mt-1">
+                {% for week in weekly_activity %}
+                <div class="flex-1 text-center text-[8px] text-gray-500 font-mono">{{ week.label }}</div>
+                {% endfor %}
+            </div>
+            <p class="text-[10px] text-gray-500 mt-2 text-center">Skaičiai apačioje — ISO savaitės numeris</p>
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500 italic">Nėra pakankamai duomenų grafikui.</p>
+        {% endif %}
+    </div>
+
+    {# Aktyviausi žaidėjai #}
+    <div class="glass-card rounded-3xl p-6 border border-gray-800">
+        <h2 class="text-base font-bold text-white mb-4 border-b border-gray-800 pb-3 flex items-center gap-2">
+            <i class="fa-solid fa-user-check text-brand-pink"></i> Aktyviausi Žaidėjai (pagal dalyvavimą)
+        </h2>
+        {% if participation_ranking and total_completed_games > 0 %}
+            <ul class="space-y-3">
+                {% for stat in participation_ranking %}
+                    <li class="flex items-center gap-3">
+                        <span class="w-6 text-center font-mono font-bold {% if forloop.first %}text-amber-400{% else %}text-gray-500{% endif %}">{{ forloop.counter }}</span>
+                        <span class="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-600 to-brand-pink flex items-center justify-center text-white text-[10px] font-bold uppercase shrink-0">{{ stat.user.get_full_name|default:stat.user.username|slice:":1" }}</span>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-medium text-white text-sm truncate">{{ stat.user.get_full_name|default:stat.user.username }}</span>
+                                <span class="text-xs font-mono font-bold text-emerald-400 shrink-0 ml-2">{{ stat.games_participated }}/{{ stat.total_games }} ({{ stat.percent }}%)</span>
+                            </div>
+                            <div class="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+                                <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-brand-500" style="width: {{ stat.percent }}%;"></div>
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-sm text-gray-500 italic">Šioje grupėje kol kas nėra užbaigtų žaidimų dalyvavimo duomenų.</p>
+        {% endif %}
+    </div>
+
+</section>
 
 {# Grįžimo nuoroda #}
 <div class="mt-8">
@@ -111,12 +224,81 @@
 
 {% block scripts %}
 {{ block.super }}
-<script>
-    // Inicializuoti ikonas
+<script>    // Inicializuoti ikonas
     document.addEventListener('DOMContentLoaded', () => {
          if (typeof lucide !== 'undefined') {
              lucide.createIcons();
          }
      });
+
+    // Statistikos skirtukų perjungimas
+    function switchStatTab(tab) {
+        const honorsView = document.getElementById('stat-view-honors');
+        const participationView = document.getElementById('stat-view-participation');
+        const honorsBtn = document.getElementById('stat-tab-honors');
+        const participationBtn = document.getElementById('stat-tab-participation');
+
+        const activeClasses = ['bg-brand-600', 'text-white', 'shadow-md'];
+        const inactiveClasses = ['text-gray-400', 'hover:text-white', 'hover:bg-gray-800/60'];
+
+        function setActive(btn) {
+            btn.classList.add(...activeClasses);
+            btn.classList.remove(...inactiveClasses);
+        }
+        function setInactive(btn) {
+            btn.classList.remove(...activeClasses);
+            btn.classList.add(...inactiveClasses);
+        }
+
+        if (tab === 'participation') {
+            honorsView.classList.add('hidden');
+            participationView.classList.remove('hidden');
+            setActive(participationBtn);
+            setInactive(honorsBtn);
+        } else {
+            participationView.classList.add('hidden');
+            honorsView.classList.remove('hidden');
+            setActive(honorsBtn);
+            setInactive(participationBtn);
+        }
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }    window.switchStatTab = switchStatTab;
+
+    // Grafiko režimo perjungimas: skaičius / procentai
+    function switchChartMode(mode) {
+        const countBtn = document.getElementById('chart-mode-count');
+        const percentBtn = document.getElementById('chart-mode-percent');
+        const activeClasses = ['bg-emerald-600', 'text-white', 'shadow'];
+        const inactiveClasses = ['text-gray-400', 'hover:text-white'];
+
+        if (mode === 'percent') {
+            percentBtn.classList.add(...activeClasses);
+            percentBtn.classList.remove(...inactiveClasses);
+            countBtn.classList.remove(...activeClasses);
+            countBtn.classList.add(...inactiveClasses);
+        } else {
+            countBtn.classList.add(...activeClasses);
+            countBtn.classList.remove(...inactiveClasses);
+            percentBtn.classList.remove(...activeClasses);
+            percentBtn.classList.add(...inactiveClasses);
+        }
+
+        // Atnaujinam reikšmių etiketes
+        document.querySelectorAll('.chart-value').forEach(el => {
+            el.textContent = mode === 'percent'
+                ? el.dataset.percent + '%'
+                : el.dataset.count;
+        });
+
+        // Atnaujinam juostų aukščius
+        document.querySelectorAll('.chart-bar').forEach(el => {
+            const h = mode === 'percent' ? el.dataset.percentHeight : el.dataset.countHeight;
+            el.style.height = h + '%';
+        });
+    }
+    window.switchChartMode = switchChartMode;
 </script>
 {% endblock %}

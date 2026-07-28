@@ -4,76 +4,346 @@
 {% block title %}Balsavimo Rezultatai: {{ game.name }}{% endblock %}
 
 {% block content %}
-{# ... (antraštė, pranešimai) ... #}
-<h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">
-    Balsavimo Rezultatai: <span class="font-normal">{{ game.name }}</span>
-</h1>
-<p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
-    Grupė: <a href="{% url 'group_admin' group_code=group.code %}" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ group.name }}</a>
-</p>
 
-{% if messages %} ... {% endif %}
-
-
-<div class="p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
-    <h2 class="text-xl font-semibold text-gray-700 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-600 pb-2">
-        Kas kaip balsavo
-    </h2>
-
-    {% if voting_details %}
-        <div class="space-y-6">
-            {% for voter, votes in voting_details.items %}
-                <div class="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">
-                         <i data-lucide="user-check" class="inline-block w-5 h-5 mr-1 -mt-1 text-indigo-500"></i>
-                         {{ voter.get_full_name|default:voter.username }} balsai:
-                    </h3>
-                    <ul class="space-y-2 pl-5">
-                        {% for vote_info in votes %}
-                            <li class="text-sm">
-                                <span class="font-semibold {% if vote_info.points == 3 %} text-amber-600 dark:text-amber-400 {% elif vote_info.points == 2 %} text-gray-600 dark:text-gray-300 {% else %} text-orange-700 dark:text-orange-500 {% endif %}">
-                                    {{ vote_info.points }} {% if vote_info.points == 1 %}taškas{% else %}taškai{% endif %}
-                                </span>
-                                <i data-lucide="arrow-right" class="inline-block w-3 h-3 mx-1 text-gray-400"></i>
-                                <span class="text-gray-900 dark:text-gray-100">{{ vote_info.song.title }}</span>
-                                {# <<< PRADŽIA: Pataisytas įkėlėjo vardo rodymas >>> #}
-                                <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">
-                                    (Įkėlė: {{ vote_info.song.submitted_by.get_full_name|default:vote_info.song.submitted_by.username }})
-                                </span>
-                                {# <<< PABAIGA: Pataisytas įkėlėjo vardo rodymas >>> #}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <p class="text-sm text-gray-500 dark:text-gray-400 italic">Šiame žaidime dar niekas nebalsavo arba balsavimo duomenų nėra.</p>
-    {% endif %}
-
-    {# ... (Grįžimo nuorodos) ... #}
-     <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
-        <a href="{% url 'game_details' group_code=group.code game_id=game.id %}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
-            &larr; Grįžti į žaidimo detales
-        </a>
-         <span class="mx-2 text-gray-300 dark:text-gray-600">|</span>
-         <a href="{% url 'group_games_list' group_code=group.code %}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
-            Visi grupės žaidimai
-        </a>
+{# Pranešimai #}
+{% if messages %}
+    <div class="mb-6 space-y-2">
+        {% for message in messages %}
+            <div class="p-3 rounded-xl text-xs font-medium border {% if message.tags == 'success' %} bg-emerald-500/10 text-emerald-300 border-emerald-500/30 {% elif message.tags == 'error' %} bg-red-500/10 text-red-300 border-red-500/30 {% elif message.tags == 'warning' %} bg-amber-500/10 text-amber-300 border-amber-500/30 {% else %} bg-brand-500/10 text-brand-100 border-brand-500/30 {% endif %}" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
     </div>
+{% endif %}
 
+{# --- Antraštė ir navigacijos skirtukai --- #}
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+    <div>
+        <a href="{% url 'group_admin' group_code=group.code %}" class="text-xs text-gray-400 hover:text-white hover:underline inline-flex items-center gap-1.5 mb-1">
+            <i class="fa-solid fa-arrow-left text-[10px]"></i> {{ group.name }}
+        </a>
+        <h1 class="text-2xl lg:text-3xl font-black text-white">Balsavimo Rezultatai</h1>
+    </div>
+    <nav class="flex flex-wrap items-center gap-1 bg-gray-900/80 p-1.5 rounded-2xl border border-gray-800">
+        <button onclick="switchTab('songs-breakdown')" id="tab-songs-breakdown" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-brand-600 text-white shadow-md flex items-center gap-2">
+            <i class="fa-solid fa-list-ol text-amber-300"></i> Dainos ir Balai
+        </button>
+        <button onclick="switchTab('results')" id="tab-results" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold transition-all text-gray-400 hover:text-white hover:bg-gray-800/60 flex items-center gap-2">
+            <i class="fa-solid fa-trophy text-amber-300"></i> Lyderių Lentelė
+        </button>
+        <button onclick="switchTab('people-votes')" id="tab-people" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold transition-all text-gray-400 hover:text-white hover:bg-gray-800/60 flex items-center gap-2">
+            <i class="fa-solid fa-users text-brand-pink"></i> Žmonių Balai
+        </button>
+        <button onclick="switchTab('stats')" id="tab-stats" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold transition-all text-gray-400 hover:text-white hover:bg-gray-800/60 flex items-center gap-2">
+            <i class="fa-solid fa-chart-pie text-emerald-300"></i> Matrica
+        </button>
+    </nav>
 </div>
 
-{% endblock %}
+{# --- Baneris --- #}
+<div class="relative rounded-3xl overflow-hidden glass-card p-6 sm:p-8 mb-8 border border-brand-500/20 bg-gradient-to-r from-brand-cardBg via-brand-darkBg to-purple-950/50 shadow-2xl">
+    <div class="absolute -right-10 -bottom-10 w-72 h-72 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -left-10 -top-10 w-72 h-72 bg-brand-pink/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div>
+            <div class="flex flex-wrap items-center gap-3 mb-3">
+                <span class="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-brand-500/20 text-brand-100 border border-brand-500/40">
+                    <i class="fa-solid fa-music mr-1.5"></i> {{ group.name }}
+                </span>
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                    <i class="fa-solid fa-flag-checkered"></i> Balsavimas baigtas
+                </span>
+            </div>
+            <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight">{{ game.name }}</h2>
+            {% if game.description %}
+            <p class="text-gray-300 text-sm mt-2 max-w-2xl leading-relaxed whitespace-pre-wrap">{{ game.description }}</p>
+            {% endif %}
+        </div>
+        <div class="grid grid-cols-3 gap-3 sm:gap-4 shrink-0 bg-gray-950/60 p-4 rounded-2xl border border-gray-800">
+            <div class="text-center px-2">
+                <div class="text-xs text-gray-400 font-medium">Dainų</div>
+                <div class="text-2xl font-black text-white mt-0.5">{{ song_count }}</div>
+            </div>
+            <div class="text-center px-2 border-x border-gray-800">
+                <div class="text-xs text-gray-400 font-medium">Balsavusių</div>
+                <div class="text-2xl font-black text-brand-400 mt-0.5">{{ voter_count }}</div>
+            </div>
+            <div class="text-center px-2">
+                <div class="text-xs text-gray-400 font-medium">Iš viso taškų</div>
+                <div class="text-2xl font-black text-brand-pink mt-0.5">{{ total_points_all }}</div>
+            </div>
+        </div>
+    </div>
+</div>
 
-{% block scripts %}
-{# ... (script blokas) ... #}
-{{ block.super }}
+
+{# ========================================================================= #}
+{# TAB 0: DAINOS IR BALAI #}
+{# ========================================================================= #}
+<section id="view-songs-breakdown" class="space-y-6">
+    <div class="glass-card rounded-3xl p-6 sm:p-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-gray-800">
+            <div>
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-music text-amber-300 text-2xl"></i>
+                    <h2 class="text-xl sm:text-2xl font-black text-white">Dalyvaujančios Dainos ir Gauti Balai</h2>
+                </div>
+                <p class="text-xs text-gray-400 mt-1">Kiekviena daina, ją pateikęs žmogus, gauti taškai ir balsavusių sąrašas</p>
+            </div>
+            <div class="relative min-w-[260px]">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                <input type="text" id="song-search-input" onkeyup="filterSongsBreakdown()" placeholder="Ieškoti dainos ar balsuotojo..." class="w-full bg-gray-900 border border-gray-700 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-brand-500">
+            </div>
+        </div>
+
+        <div id="songs-breakdown-list" class="space-y-6 mt-6">
+            {% for item in leaderboard %}
+            <div class="song-breakdown-item p-5 rounded-2xl bg-gray-900/90 border {% if item.rank == 1 %}border-amber-500/40{% elif item.rank == 2 %}border-slate-400/40{% elif item.rank == 3 %}border-amber-700/40{% else %}border-gray-800{% endif %} transition-all shadow-xl">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gray-800/80">
+                    <div class="flex items-center space-x-4">
+                        <span class="w-9 h-9 rounded-full font-black text-sm flex items-center justify-center shrink-0 border {% if item.rank == 1 %}bg-amber-400/20 text-amber-300 border-amber-500/40{% elif item.rank == 2 %}bg-slate-400/20 text-slate-200 border-slate-400/40{% elif item.rank == 3 %}bg-amber-700/20 text-amber-500 border-amber-700/40{% else %}bg-gray-800 text-gray-400 border-gray-700{% endif %}">{{ item.rank }}</span>
+                        <div>
+                            <h3 class="font-extrabold text-white text-lg leading-snug">{{ item.song.title }}</h3>
+                            <p class="text-[11px] text-brand-300 mt-1">Pateikė: <span class="font-semibold">{{ item.song.submitted_by.get_full_name|default:item.song.submitted_by.username }}</span></p>
+                            <a href="{{ item.song.youtube_url }}" target="_blank" rel="noopener" class="text-[11px] text-red-400 hover:text-red-300 inline-flex items-center gap-1 mt-1">
+                                <i class="fa-brands fa-youtube"></i> Klausytis YouTube
+                            </a>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <div class="text-2xl font-black {% if item.rank == 1 %}text-amber-300{% elif item.rank == 2 %}text-slate-200{% elif item.rank == 3 %}text-amber-500{% else %}text-white{% endif %}">{{ item.total_points }} tšk.</div>
+                        <div class="text-[10px] text-gray-400 font-medium">Iš viso gauta taškų</div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">
+                        <i class="fa-solid fa-users text-brand-400 mr-1.5"></i> Balsavę žmonės ir skirti taškai ({{ item.voters|length }}):
+                    </div>
+                    {% if item.voters %}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                        {% for v in item.voters %}
+                        <div class="p-2.5 rounded-xl bg-gray-950 border {% if v.points >= 4 %}border-amber-500/30{% elif v.points == 3 %}border-brand-500/20{% else %}border-gray-800{% endif %} flex items-center justify-between">
+                            <div class="flex items-center space-x-2.5 truncate">
+                                <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-brand-600 to-brand-pink text-white font-bold text-[10px] flex items-center justify-center shrink-0 uppercase">{{ v.voter.get_full_name|default:v.voter.username|slice:":2" }}</div>
+                                <span class="text-xs font-bold text-gray-200 truncate">{{ v.voter.get_full_name|default:v.voter.username }}</span>
+                            </div>
+                            <span class="px-2.5 py-0.5 rounded-lg font-black text-xs border shrink-0 {% if v.points == 5 %}bg-amber-500/20 text-amber-300 border-amber-500/40{% elif v.points == 4 %}bg-brand-500/20 text-brand-200 border-brand-500/40{% elif v.points == 3 %}bg-purple-500/20 text-purple-300 border-purple-500/40{% elif v.points == 2 %}bg-slate-500/20 text-slate-300 border-slate-500/40{% else %}bg-gray-800 text-gray-300 border-gray-700{% endif %}">{{ v.points }} tšk.</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-xs text-gray-500 italic">Ši daina negavo nė vieno balso.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-sm text-gray-400 italic text-center py-8">Šiame žaidime dar nėra dainų arba balsų.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+
+{# ========================================================================= #}
+{# TAB 1: LYDERIŲ LENTELĖ #}
+{# ========================================================================= #}
+<section id="view-results" class="hidden space-y-8">
+    <div class="glass-card rounded-3xl p-6 sm:p-8">
+        <div class="flex items-center gap-2 mb-6">
+            <i class="fa-solid fa-trophy text-amber-300 text-2xl"></i>
+            <h2 class="text-xl sm:text-2xl font-black text-white">Lyderių Lentelė</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm border-collapse">
+                <thead>
+                    <tr class="bg-gray-900/90 text-gray-300 text-xs font-bold border-b border-gray-800">
+                        <th class="py-3 px-3 text-center">#</th>
+                        <th class="py-3 px-4">Daina</th>
+                        <th class="py-3 px-4 hidden md:table-cell">Pateikė</th>
+                        <th class="py-3 px-4 text-right">Taškai</th>
+                        <th class="py-3 px-3 text-center">Nuoroda</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-800/60">
+                    {% for item in leaderboard %}
+                    <tr class="hover:bg-gray-800/30 transition-colors group">
+                        <td class="py-4 px-3 text-center">
+                            {% if item.rank == 1 %}<span class="text-amber-300 text-lg"><i class="fa-solid fa-crown"></i></span>
+                            {% elif item.rank == 2 %}<span class="font-bold text-slate-300">2</span>
+                            {% elif item.rank == 3 %}<span class="font-bold text-amber-500">3</span>
+                            {% else %}<span class="font-bold text-gray-500">{{ item.rank }}</span>{% endif %}
+                        </td>
+                        <td class="py-4 px-4">
+                            <div class="font-bold text-white group-hover:text-brand-300 transition-colors">{{ item.song.title }}</div>
+                        </td>
+                        <td class="py-4 px-4 hidden md:table-cell">
+                            <span class="text-xs font-medium text-brand-300 bg-brand-500/10 px-2.5 py-1 rounded-lg border border-brand-500/20">{{ item.song.submitted_by.get_full_name|default:item.song.submitted_by.username }}</span>
+                        </td>
+                        <td class="py-4 px-4 text-right">
+                            <div class="text-lg font-extrabold {% if item.rank == 1 %}text-amber-300{% else %}text-white{% endif %}">{{ item.total_points }}</div>
+                        </td>
+                        <td class="py-4 px-3 text-center">
+                            <a href="{{ item.song.youtube_url }}" target="_blank" rel="noopener" class="w-8 h-8 rounded-xl bg-gray-800 hover:bg-red-600 hover:text-white text-gray-300 transition-all inline-flex items-center justify-center">
+                                <i class="fa-brands fa-youtube text-xs"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="py-8 text-center text-gray-400 italic">Rezultatų nėra.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+
+{# ========================================================================= #}
+{# TAB 2: ŽMONIŲ BALAI #}
+{# ========================================================================= #}
+<section id="view-people-votes" class="hidden space-y-8">
+    <div class="glass-card rounded-3xl p-6 sm:p-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-gray-800/80">
+            <div>
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-brand-400 text-2xl"></i>
+                    <h2 class="text-xl sm:text-2xl font-black text-white">Balsavusių Žmonių Sąrašas</h2>
+                </div>
+                <p class="text-xs text-gray-400 mt-1">Kas už kokią dainą balsavo ir kiek taškų skyrė</p>
+            </div>
+            <div class="relative min-w-[220px]">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                <input type="text" id="voter-search-input" onkeyup="filterVoterList()" placeholder="Ieškoti pagal žmogų ar dainą..." class="w-full bg-gray-900 border border-gray-700 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-brand-500">
+            </div>
+        </div>
+
+        <div id="voter-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            {% for voter, votes in voting_details.items %}
+            <div class="voter-card p-5 rounded-2xl bg-gray-900/80 border border-brand-500/20 transition-all shadow-lg">
+                <div class="flex items-center justify-between pb-3 border-b border-gray-800 mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-600 to-brand-pink flex items-center justify-center font-bold text-white text-sm shadow uppercase">{{ voter.get_full_name|default:voter.username|slice:":2" }}</div>
+                        <div>
+                            <h3 class="font-extrabold text-white text-sm">{{ voter.get_full_name|default:voter.username }}</h3>
+                            <span class="text-[10px] text-gray-500">{{ votes|length }} balsai</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    {% for vote_info in votes %}
+                    <div class="p-2.5 rounded-xl bg-gray-950 border {% if vote_info.points >= 4 %}border-amber-500/30{% elif vote_info.points == 3 %}border-brand-500/20{% else %}border-gray-800{% endif %} flex items-center justify-between">
+                        <div class="flex items-center space-x-2.5 truncate">
+                            <span class="px-2 py-0.5 rounded font-black text-xs border shrink-0 {% if vote_info.points == 5 %}bg-amber-500/20 text-amber-300 border-amber-500/40{% elif vote_info.points == 4 %}bg-brand-500/20 text-brand-200 border-brand-500/40{% elif vote_info.points == 3 %}bg-purple-500/20 text-purple-300 border-purple-500/40{% elif vote_info.points == 2 %}bg-slate-500/20 text-slate-300 border-slate-500/40{% else %}bg-gray-800 text-gray-300 border-gray-700{% endif %}">{{ vote_info.points }} tšk.</span>
+                            <span class="text-xs font-bold text-white truncate">{{ vote_info.song.title }}</span>
+                        </div>
+                        <span class="text-[10px] text-gray-400 shrink-0 hidden sm:inline">{{ vote_info.song.submitted_by.get_full_name|default:vote_info.song.submitted_by.username }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-sm text-gray-400 italic col-span-full text-center py-8">Šiame žaidime dar niekas nebalsavo.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+
+{# ========================================================================= #}
+{# TAB 3: MATRICA #}
+{# ========================================================================= #}
+<section id="view-stats" class="hidden space-y-8">
+    <div class="glass-card rounded-3xl p-6 sm:p-8">
+        <div class="mb-6">
+            <h2 class="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-emerald-300"></i> Balsavimo Matrica
+            </h2>
+            <p class="text-xs text-gray-400 mt-1">Skaidri peržiūra, kas už kurią dainą ir kiek taškų atidavė</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-900/90 text-gray-300 font-bold border-b border-gray-800">
+                        <th class="p-3 whitespace-nowrap">Daina (pateikėjas)</th>
+                        {% for voter in voters_list %}
+                        <th class="p-3 text-center whitespace-nowrap">{{ voter.get_full_name|default:voter.username }}</th>
+                        {% endfor %}
+                        <th class="p-3 text-center font-black text-amber-300 bg-amber-500/10 whitespace-nowrap">Viso</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-800/60">
+                    {% for row in matrix_rows %}
+                    <tr class="hover:bg-gray-800/30 transition-colors">
+                        <td class="p-3 font-bold text-white whitespace-nowrap">
+                            <span class="w-2 h-2 rounded-full inline-block mr-1.5 {% if row.rank == 1 %}bg-amber-400{% elif row.rank == 2 %}bg-slate-400{% elif row.rank == 3 %}bg-amber-600{% else %}bg-gray-600{% endif %}"></span>
+                            {{ row.song.title }}
+                            <span class="text-[10px] text-gray-400 font-normal">({{ row.song.submitted_by.get_full_name|default:row.song.submitted_by.username }})</span>
+                        </td>
+                        {% for cell in row.cells %}
+                        <td class="p-3 text-center">
+                            {% if cell.is_own %}
+                                <span class="text-gray-600 italic">— sava</span>
+                            {% elif cell.points %}
+                                <span class="font-bold {% if cell.points == 5 %}text-amber-300{% elif cell.points == 4 %}text-brand-300{% elif cell.points == 3 %}text-purple-300{% elif cell.points == 2 %}text-slate-300{% else %}text-gray-400{% endif %}">{{ cell.points }} tšk.</span>
+                            {% else %}
+                                <span class="text-gray-700">·</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <td class="p-3 text-center font-black text-amber-300 text-sm bg-amber-500/10 whitespace-nowrap">{{ row.total_points }} tšk.</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td class="p-6 text-center text-gray-400 italic">Duomenų nėra.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+
+{# Grįžimo nuorodos #}
+<div class="mt-8 flex flex-wrap items-center gap-3 text-sm">
+    <a href="{% url 'game_details' group_code=group.code game_id=game.id %}" class="text-brand-500 hover:text-brand-100 hover:underline inline-flex items-center gap-1.5">
+        <i class="fa-solid fa-arrow-left text-xs"></i> Grįžti į žaidimo detales
+    </a>
+    <span class="text-gray-600">|</span>
+    <a href="{% url 'group_games_list' group_code=group.code %}" class="text-brand-500 hover:text-brand-100 hover:underline">Visi grupės žaidimai</a>
+</div>
+
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-         if (typeof lucide !== 'undefined') {
-             lucide.createIcons();
-         }
-     });
+    function switchTab(tab) {
+        ['songs-breakdown', 'results', 'people-votes', 'stats'].forEach(id => {
+            const sec = document.getElementById('view-' + id);
+            if (sec) sec.classList.add('hidden');
+        });
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('bg-brand-600', 'text-white', 'shadow-md');
+            btn.classList.add('text-gray-400');
+        });
+        const sec = document.getElementById('view-' + tab);
+        if (sec) sec.classList.remove('hidden');
+        const tabId = tab === 'people-votes' ? 'tab-people' : 'tab-' + tab;
+        const btn = document.getElementById(tabId);
+        if (btn) {
+            btn.classList.add('bg-brand-600', 'text-white', 'shadow-md');
+            btn.classList.remove('text-gray-400');
+        }
+    }
+
+    function filterSongsBreakdown() {
+        const q = document.getElementById('song-search-input').value.toLowerCase();
+        document.querySelectorAll('.song-breakdown-item').forEach(item => {
+            item.style.display = item.innerText.toLowerCase().includes(q) ? 'block' : 'none';
+        });
+    }
+
+    function filterVoterList() {
+        const q = document.getElementById('voter-search-input').value.toLowerCase();
+        document.querySelectorAll('.voter-card').forEach(card => {
+            card.style.display = card.innerText.toLowerCase().includes(q) ? 'block' : 'none';
+        });
+    }
 </script>
+
 {% endblock %}

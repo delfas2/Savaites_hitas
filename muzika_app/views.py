@@ -15,6 +15,7 @@ from django.db.models import Sum, Count, Q, F
 from django.core.exceptions import ValidationError
 import re
 from collections import defaultdict
+from datetime import timedelta
 
 from .models import Group, generate_unique_code, Membership, Game, Song, Vote
 from .forms import (
@@ -157,14 +158,17 @@ def group_admin_view(request, group_code):
 
         if latest_finished_game:
             last_completed_game = latest_finished_game
-            winners = list(latest_finished_game.winners.all()) # Gaunam laimėtojus iš M2M
-
-    # --- Dainos kėlimo/redagavimo modalui (tik kėlimo fazėje) ---
+            winners = list(latest_finished_game.winners.all()) # Gaunam laimėtojus iš M2M    # --- Dainos kėlimo/redagavimo modalui (tik kėlimo fazėje) ---
     user_song = None
     song_form = None
     if active_game and active_phase == 'submission' and is_member:
         user_song = Song.objects.filter(game=active_game, submitted_by=request.user).first()
         song_form = SongForm(instance=user_song) if user_song else SongForm()
+
+    # --- Žaidimo kūrimo modalui (kai vartotojas yra paskutinio žaidimo laimėtojas) ---
+    game_form = None
+    if last_completed_game and request.user in winners and (group.can_create_games or request.user.is_superuser):
+        game_form = GameForm()
 
     context = {
         'group': group,
@@ -178,6 +182,7 @@ def group_admin_view(request, group_code):
         'winners': winners,
         'user_song': user_song,
         'song_form': song_form,
+        'game_form': game_form,
     }
     return render(request, 'muzika_app/group_admin.html', context)
 
@@ -435,10 +440,18 @@ def group_games_list_view(request, group_code):
     games_list = []
     for game in games_qs:
         game.user_song_id = user_songs_map.get(game.id, None)
-        games_list.append(game)
+        games_list.append(game)    # Ar šiai grupei / vartotojui leidžiama kurti žaidimus (modalui)
+    # Kurti gali: superuser, grupės administratorius ARBA paskutinio žaidimo laimėtojas
+    now = timezone.now()
+    user_can_create = request.user.is_superuser or is_current_user_admin
+    if not user_can_create:
+        last_completed_game = Game.objects.filter(
+            group=group, voting_end_date__isnull=False, voting_end_date__lte=now, winners__isnull=False
+        ).order_by('-voting_end_date').prefetch_related('winners').first()
+        if last_completed_game and last_completed_game.winners.filter(id=request.user.id).exists():
+            user_can_create = True
 
-    # Ar šiai grupei / vartotojui leidžiama kurti žaidimus (modalui)
-    can_create_game = (group.can_create_games or request.user.is_superuser) and is_current_user_admin
+    can_create_game = (group.can_create_games or request.user.is_superuser) and user_can_create
 
     context = {
         'group': group,
@@ -509,17 +522,80 @@ def game_voting_results_view(request, group_code, game_id):
         'voter', 'song', 'song__submitted_by'
     ).order_by('voter__username', '-points')
 
+    songs = list(Song.objects.filter(game=game).select_related('submitted_by'))
+
+    # --- 1. Kiekvienos dainos surinkti taškai ir balsuotojų sąrašas ---
+    song_data = {}
+    for song in songs:
+        song_data[song.id] = {
+            'song': song,
+            'total_points': 0,
+            'voters': [],  # [{'voter':..., 'points':...}]
+        }
+
+    # --- 2. Kiekvieno balsuotojo atiduoti balsai ---
     voting_details = defaultdict(list)
+    voters_set = set()
     for vote in all_votes:
         voting_details[vote.voter].append({
             'song': vote.song,
-            'points': vote.points
+            'points': vote.points,
+        })
+        voters_set.add(vote.voter)
+        sd = song_data.get(vote.song_id)
+        if sd:
+            sd['total_points'] += vote.points
+            sd['voters'].append({'voter': vote.voter, 'points': vote.points})
+
+    # Surikiuojam kiekvienos dainos balsuotojus pagal taškus (mažėjančiai)
+    for sd in song_data.values():
+        sd['voters'].sort(key=lambda v: v['points'], reverse=True)
+
+    # --- 3. Lyderių lentelė (dainos surikiuotos pagal taškus) ---
+    leaderboard = sorted(
+        song_data.values(),
+        key=lambda x: x['total_points'],
+        reverse=True
+    )
+    for idx, item in enumerate(leaderboard, start=1):
+        item['rank'] = idx
+
+    # --- 4. Balsavimo matrica: eilutės = dainos, stulpeliai = balsuotojai ---
+    voters_list = sorted(voters_set, key=lambda u: (u.get_full_name() or u.username).lower())
+    # Greitas paieškos žemėlapis: (song_id, voter_id) -> points
+    points_lookup = {}
+    for vote in all_votes:
+        points_lookup[(vote.song_id, vote.voter_id)] = vote.points
+
+    matrix_rows = []
+    for item in leaderboard:
+        song = item['song']
+        cells = []
+        for voter in voters_list:
+            is_own = (song.submitted_by_id == voter.id)
+            pts = points_lookup.get((song.id, voter.id))
+            cells.append({
+                'voter': voter,
+                'points': pts,
+                'is_own': is_own,
+            })
+        matrix_rows.append({
+            'song': song,
+            'total_points': item['total_points'],
+            'rank': item['rank'],
+            'cells': cells,
         })
 
     context = {
         'group': group,
         'game': game,
         'voting_details': dict(voting_details),
+        'leaderboard': leaderboard,
+        'matrix_rows': matrix_rows,
+        'voters_list': voters_list,
+        'song_count': len(songs),
+        'voter_count': len(voters_list),
+        'total_points_all': sum(sd['total_points'] for sd in song_data.values()),
     }
     return render(request, 'muzika_app/game_voting_results.html', context)
 
@@ -880,10 +956,108 @@ def statistics_view(request, group_code):
     for user_stat in points_ranking_list:
         user_stat.score_ending = get_lithuanian_score_ending(user_stat.total_score_received)
 
+    # =====================================================================
+    # DALYVAVIMO STATISTIKA
+    # =====================================================================
+    # Užbaigti žaidimai (balsavimas pasibaigęs)
+    completed_games = list(
+        Game.objects.filter(
+            group=group,
+            voting_end_date__isnull=False,
+            voting_end_date__lte=now
+        ).order_by('voting_end_date')
+    )
+    completed_game_ids = [g.id for g in completed_games]
+    total_completed_games = len(completed_games)
+
+    # Nariai (id -> User) rikiavimui/vardams
+    members = list(User.objects.filter(id__in=group_member_ids))
+    member_map = {u.id: u for u in members}
+
+    # Kas dalyvavo kuriame žaidime (dalyvavimas = pateikė dainą ARBA balsavo)
+    # game_id -> set(user_id)
+    participation_by_game = defaultdict(set)
+    if completed_game_ids:
+        song_rows = Song.objects.filter(
+            game_id__in=completed_game_ids
+        ).values_list('game_id', 'submitted_by_id')
+        for gid, uid in song_rows:
+            participation_by_game[gid].add(uid)
+
+        vote_rows = Vote.objects.filter(
+            game_id__in=completed_game_ids
+        ).values_list('game_id', 'voter_id').distinct()
+        for gid, uid in vote_rows:
+            participation_by_game[gid].add(uid)
+
+    # Dalyvavimas pagal narį
+    participation_count = defaultdict(int)
+    for gid, uids in participation_by_game.items():
+        for uid in uids:
+            participation_count[uid] += 1
+
+    participation_ranking = []
+    for uid in group_member_ids:
+        user_obj = member_map.get(uid)
+        if not user_obj:
+            continue
+        count = participation_count.get(uid, 0)
+        percent = round((count / total_completed_games) * 100) if total_completed_games else 0
+        participation_ranking.append({
+            'user': user_obj,
+            'games_participated': count,
+            'total_games': total_completed_games,
+            'percent': percent,
+        })
+    participation_ranking.sort(key=lambda x: x['games_participated'], reverse=True)
+
+    # =====================================================================
+    # KOMANDOS AKTYVUMAS PER SAVAITĘ (paskutinės 30 savaičių)
+    # =====================================================================    # Grupuojam žaidimus pagal balsavimo pabaigos ISO savaitę
+    activity_by_week = defaultdict(set)  # (year, week) -> set(user_id)
+    for g in completed_games:
+        iso = g.voting_end_date.isocalendar()
+        key = (iso[0], iso[1])
+        activity_by_week[key] |= participation_by_game.get(g.id, set())
+
+    # Narių prisijungimo datos – kad procentus skaičiuotume pagal tą savaitę
+    # buvusį narių skaičių, o ne dabartinį.
+    join_dates = list(
+        Membership.objects.filter(group=group).values_list('date_joined', flat=True)
+    )
+
+    # Sudarom paskutinių 30 savaičių sąrašą (nuo dabar atgal)
+    total_members = len(group_member_ids)
+    weekly_activity = []
+    current_monday = now - timedelta(days=now.weekday())
+    for i in range(29, -1, -1):
+        week_start = current_monday - timedelta(weeks=i)
+        week_end = week_start + timedelta(days=7)
+        iso = week_start.isocalendar()
+        key = (iso[0], iso[1])
+        count = len(activity_by_week.get(key, set()))
+        # Narių skaičius, buvusių tą savaitę (prisijungę iki savaitės pabaigos)
+        members_that_week = sum(1 for d in join_dates if d < week_end)
+        percent = round(count / members_that_week * 100) if members_that_week > 0 else 0
+        weekly_activity.append({
+            'label': f"{iso[1]:02d}",  # savaitės numeris
+            'full_label': f"{iso[0]} m. {iso[1]} sav.",
+            'count': count,
+            'members': members_that_week,
+            'percent': percent,
+        })
+
+    max_weekly = max((w['count'] for w in weekly_activity), default=0)
+
     context = {
         'group': group,
         'top_winners': top_winners,
         'points_ranking': points_ranking_list,
+        'participation_ranking': participation_ranking,
+        'total_completed_games': total_completed_games,
+        'weekly_activity': weekly_activity,
+        'max_weekly': max_weekly,
+        'total_members': total_members,
     }
     return render(request, 'muzika_app/statistics.html', context)
 

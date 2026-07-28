@@ -1,6 +1,6 @@
 {# muzika_app/templates/muzika_app/base.html #}
 <!DOCTYPE html>
-<html lang="lt" class="dark">
+<html lang="lt-LT" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,9 +22,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     {# Google Fonts & Font Awesome #}
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-    {# Lucide Icons iš CDN (turinio puslapiai naudoja data-lucide) #}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>    {# Lucide Icons iš CDN (turinio puslapiai naudoja data-lucide) #}
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    {# Flatpickr – datos/laiko parinkiklis su garantuotu 24 val. formatu #}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/lt.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -218,35 +222,55 @@
            ========================================================= */
         html:not(.dark) {
             color-scheme: light;
-        }
-
-        /* --- Tekstų spalvos --- */
+        }        /* --- Tekstų spalvos --- */
         html:not(.dark) .text-white { color: #0f172a !important; }
         html:not(.dark) .text-gray-100,
         html:not(.dark) .text-gray-200,
         html:not(.dark) .text-gray-300 { color: #334155 !important; }
         html:not(.dark) .text-gray-400,
         html:not(.dark) .text-gray-500 { color: #64748b !important; }
+        html:not(.dark) .text-gray-600,
+        html:not(.dark) .text-gray-700 { color: #475569 !important; }
+        html:not(.dark) .text-gray-800,
+        html:not(.dark) .text-gray-900 { color: #0f172a !important; }
 
         /* Gradientinės antraštės (bg-clip-text) – pakeičiam į tamsų gradientą */
         html:not(.dark) .bg-gradient-to-r.from-white,
         html:not(.dark) h1 .from-white {
             background-image: linear-gradient(to right, #0f172a, #334155, #4f46e5) !important;
         }        /* --- Fonai --- */
+        /* Giliausi (beveik juodi) fonai -> labai šviesiai pilkas */
+        html:not(.dark) .bg-gray-950,
+        html:not(.dark) [class*="bg-gray-950/"] {
+            background-color: #f1f5f9 !important;
+        }
         html:not(.dark) .bg-gray-900,
         html:not(.dark) .bg-gray-800,
         html:not(.dark) [class*="bg-gray-900/"],
         html:not(.dark) [class*="bg-gray-800/"] {
             background-color: rgba(255, 255, 255, 0.85) !important;
         }
+        /* Šviesesni pilki fonai (gray-700/600) -> šviesus */
+        html:not(.dark) .bg-gray-700,
+        html:not(.dark) .bg-gray-600,
+        html:not(.dark) [class*="bg-gray-700/"],
+        html:not(.dark) [class*="bg-gray-600/"] {
+            background-color: #f8fafc !important;
+        }
         html:not(.dark) .bg-brand-darkBg,
         html:not(.dark) .bg-brand-cardBg { background-color: #ffffff !important; }
 
         /* --- Kraštinės --- */
+        html:not(.dark) .border-gray-950,
+        html:not(.dark) .border-gray-900,
         html:not(.dark) .border-gray-800,
         html:not(.dark) .border-gray-700,
+        html:not(.dark) .border-gray-600,
+        html:not(.dark) .border-gray-500,
+        html:not(.dark) [class*="border-gray-900/"],
         html:not(.dark) [class*="border-gray-800/"],
-        html:not(.dark) [class*="border-gray-700/"] {
+        html:not(.dark) [class*="border-gray-700/"],
+        html:not(.dark) [class*="border-gray-600/"] {
             border-color: #e2e8f0 !important;
         }
         html:not(.dark) .divide-gray-800 > :not([hidden]) ~ :not([hidden]),
@@ -255,9 +279,19 @@
         }
 
         /* --- Hero baneris (tamsus gradientas) šviesioje temoje --- */
-        html:not(.dark) .bg-gradient-to-br.from-brand-cardBg {
+        html:not(.dark) .bg-gradient-to-br.from-brand-cardBg,
+        html:not(.dark) .bg-gradient-to-r.from-brand-cardBg {
             background-image: linear-gradient(to bottom right, #eef2ff, #ffffff, #faf5ff) !important;
         }
+
+        /* „Paskutinio žaidimo rezultatai" baneris (from-amber-500/15 via-brand-cardBg) */
+        html:not(.dark) .bg-gradient-to-br[class*="from-amber-500/"] {
+            background-image: linear-gradient(to bottom right, #fef3c7, #ffffff, #ffffff) !important;
+            border-color: #fcd34d !important;
+        }
+        /* Gintarinis tekstas šviesioje temoje – tamsesnis, kad matytųsi */
+        html:not(.dark) .text-amber-300,
+        html:not(.dark) .text-amber-200 { color: #b45309 !important; }
 
         /* Stiklo „chip'ai" hero banerio viduje (buvo bg-gray-900/80) */
         html:not(.dark) [class*="bg-gray-900/"].backdrop-blur-md {
@@ -268,10 +302,23 @@
         html:not(.dark) header { box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06); }
 
         /* Modalų fonas šiek tiek šviesesnis */
-        html:not(.dark) [class*="bg-black/"] { background-color: rgba(15, 23, 42, 0.45) !important; }
-
-        /* Footeris */
+        html:not(.dark) [class*="bg-black/"] { background-color: rgba(15, 23, 42, 0.45) !important; }        /* Footeris */
         html:not(.dark) footer { background-color: rgba(255,255,255,0.5); }
+
+        /* =========================================================
+           FLATPICKR – datos/laiko laukų dydžio suvienodinimas su
+           kitais formos laukais (kad neatrodytų neproporcingai dideli)
+           ========================================================= */
+        input.js-datetime.flatpickr-input {
+            font-size: 0.75rem !important;   /* text-xs */
+            line-height: 1rem !important;
+            padding: 0.625rem 1rem !important; /* px-4 py-2.5 */
+            height: auto !important;
+        }
+        /* Pats kalendorius – kompaktiškesnis */
+        .flatpickr-calendar {
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
@@ -415,8 +462,28 @@
           var isDark = document.documentElement.classList.toggle('dark');
           try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
           updateThemeIcon();
+      }      updateThemeIcon();
+    </script>
+
+    {# Flatpickr inicializavimas visiems .js-datetime laukams (24 val. formatas) #}
+    <script>
+      function initFlatpickr() {
+          if (typeof flatpickr === 'undefined') return;
+          document.querySelectorAll('.js-datetime').forEach(function(el) {
+              if (el._flatpickr) return; // jau inicializuota
+              flatpickr(el, {
+                  enableTime: true,
+                  time_24hr: true,
+                  dateFormat: 'Y-m-d H:i',
+                  minuteIncrement: 5,
+                  allowInput: true,
+                  static: true,
+                  locale: (flatpickr.l10ns && flatpickr.l10ns.lt) ? flatpickr.l10ns.lt : 'default'
+              });
+          });
       }
-      updateThemeIcon();
+      document.addEventListener('DOMContentLoaded', initFlatpickr);
+      // Modaluose laukai jau yra DOM'e, tad užtenka inicializuoti po pakrovimo.
     </script>
 
 </body>

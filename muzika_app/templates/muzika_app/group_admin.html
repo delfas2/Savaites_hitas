@@ -139,12 +139,11 @@
                         {% for winner in winners %}{{ winner.get_full_name|default:winner.username }}{% if not forloop.last %}, {% endif %}{% endfor %}!
                     </span>
                     Jūsų prizas — sugalvoti naują temą kitam žaidimui.
-                </p>
-                <div class="flex flex-wrap items-center gap-3">
+                </p>                <div class="flex flex-wrap items-center gap-3">
                     {% if request.user in winners %}
-                        <a href="{% url 'create_game' group_code=group.code %}" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-accent to-emerald-600 text-white font-bold text-xs hover:brightness-110 transition shadow-lg flex items-center gap-2">
+                        <button type="button" onclick="openGameModal()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-accent to-emerald-600 text-white font-bold text-xs hover:brightness-110 transition shadow-lg flex items-center gap-2">
                             <i class="fa-solid fa-plus"></i> Kurti Naują Žaidimą (Jūsų eilė!)
-                        </a>
+                        </button>
                     {% endif %}
                     <a href="{% url 'game_voting_results' group_code=group.code game_id=last_completed_game.id %}" class="text-xs text-gray-400 hover:text-white hover:underline">
                         Žiūrėti balsavimo rezultatus
@@ -318,6 +317,57 @@
 {% endif %}
 
 
+{# --- MODALAS: KURTI ŽAIDIMĄ (paskutinio žaidimo laimėtojui) --- #}
+{% if game_form %}
+<div id="gameModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-200 p-4">
+    <div class="glass-panel rounded-3xl p-6 lg:p-8 max-w-lg w-full border border-gray-800 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <button type="button" onclick="closeGameModal()" class="absolute top-5 right-5 text-gray-400 hover:text-white">
+            <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-9 h-9 rounded-xl bg-brand-pink/20 text-brand-pink flex items-center justify-center">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-white">Sukurti Naują Konkursą</h3>
+                <p class="text-[11px] text-gray-400">Grupė: {{ group.name }}</p>
+            </div>
+        </div>
+
+        <form action="{% url 'create_game' group_code=group.code %}" method="POST" class="space-y-3">
+            {% csrf_token %}
+            <div>
+                <label for="{{ game_form.name.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ game_form.name.label }}</label>
+                {{ game_form.name }}
+            </div>
+            <div>
+                <label for="{{ game_form.description.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ game_form.description.label }}</label>
+                {{ game_form.description }}
+            </div>
+            <div>
+                <label for="{{ game_form.submission_start_date.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ game_form.submission_start_date.label }}</label>
+                {{ game_form.submission_start_date }}
+            </div>
+            <div>
+                <label for="{{ game_form.submission_end_date.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ game_form.submission_end_date.label }}</label>
+                {{ game_form.submission_end_date }}
+                <p class="mt-1 text-[10px] text-gray-500">Balsavimas prasidės iškart po dainų kėlimo pabaigos.</p>
+            </div>
+            <div>
+                <label for="{{ game_form.voting_end_date.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ game_form.voting_end_date.label }}</label>
+                {{ game_form.voting_end_date }}
+            </div>
+            <div class="pt-2 flex justify-end gap-2">
+                <button type="button" onclick="closeGameModal()" class="px-4 py-2 rounded-xl bg-gray-800 text-gray-300 text-xs font-bold hover:bg-gray-700 transition">Atšaukti</button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-brand-pink hover:brightness-110 text-white text-xs font-bold shadow-lg transition">Pradėti Žaidimą</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+
 {# Script blokas ikonoms #}
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -357,8 +407,7 @@
     function openSongModal() {
         const m = document.getElementById('songModal');
         if (m) m.classList.remove('opacity-0', 'pointer-events-none');
-    }
-    function closeSongModal() {
+    }    function closeSongModal() {
         const m = document.getElementById('songModal');
         if (m) m.classList.add('opacity-0', 'pointer-events-none');
     }
@@ -370,6 +419,27 @@
         if (m) {
             m.addEventListener('click', function(e) {
                 if (e.target === m) closeSongModal();
+            });
+        }
+    });
+
+    // --- Žaidimo kūrimo modalo valdymas ---
+    function openGameModal() {
+        const m = document.getElementById('gameModal');
+        if (m) m.classList.remove('opacity-0', 'pointer-events-none');
+    }
+    function closeGameModal() {
+        const m = document.getElementById('gameModal');
+        if (m) m.classList.add('opacity-0', 'pointer-events-none');
+    }
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeGameModal();
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+        const gm = document.getElementById('gameModal');
+        if (gm) {
+            gm.addEventListener('click', function(e) {
+                if (e.target === gm) closeGameModal();
             });
         }
     });

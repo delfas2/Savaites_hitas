@@ -93,46 +93,49 @@ class GameForm(forms.ModelForm):
                 'rows': 3,
                 'class': 'mt-1 block w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500 placeholder-gray-500',
                 'placeholder': 'Trumpai aprašykite žaidimo taisykles ar temą (matysis banerio viršuje po pavadinimu)...'
-            }),
-            'submission_start_date': forms.DateTimeInput(
+            }),            'submission_start_date': forms.DateTimeInput(
                 attrs={
-                    'type': 'datetime-local',
-                    'lang': 'lt-LT',
-                    'step': '60',
-                    'class': 'mt-1 block w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500 placeholder-gray-500'
+                    'type': 'text',
+                    'autocomplete': 'off',
+                    'placeholder': 'YYYY-MM-DD VV:MM',                    'class': 'js-datetime mt-1 block w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500 placeholder-gray-500'
                 },
-                format='%Y-%m-%dT%H:%M' # Formatas reikalingas DateTimeInput
+                format='%Y-%m-%d %H:%M' # Formatas reikalingas DateTimeInput
             ),
             'submission_end_date': forms.DateTimeInput(
                  attrs={
-                    'type': 'datetime-local',
-                    'lang': 'lt-LT',
-                    'step': '60',
-                    'class': 'mt-1 block w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500 placeholder-gray-500'
+                    'type': 'text',
+                    'autocomplete': 'off',
+                    'placeholder': 'YYYY-MM-DD VV:MM',
+                    'class': 'js-datetime mt-1 block w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500 placeholder-gray-500'
                 },
-                format='%Y-%m-%dT%H:%M'
+                format='%Y-%m-%d %H:%M'
             ),
             'voting_end_date': forms.DateTimeInput(
                  attrs={
-                    'type': 'datetime-local',
-                    'lang': 'lt-LT',
-                    'step': '60',
-                    'class': 'mt-1 block w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500 placeholder-gray-500'
+                    'type': 'text',
+                    'autocomplete': 'off',
+                    'placeholder': 'YYYY-MM-DD VV:MM',
+                    'class': 'js-datetime mt-1 block w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500 placeholder-gray-500'
                 },
-                format='%Y-%m-%dT%H:%M'            ),
+                format='%Y-%m-%d %H:%M'            ),
         }
         labels = {
             'name': 'Žaidimo tema / pavadinimas',
             'description': 'Žaidimo aprašymas (nebūtina)',
             'submission_start_date': 'Dainų kėlimo pradžia',
-            'submission_end_date': 'Dainų kėlimo pabaiga (= balsavimo pradžia)',
-            'voting_end_date': 'Balsavimo pabaiga',
+            'submission_end_date': 'Dainų kėlimo pabaiga (= balsavimo pradžia)',            'voting_end_date': 'Balsavimo pabaiga',
         }
         help_texts = {
              'submission_start_date': 'Nuo kada galima kelti dainas.',
              'submission_end_date': 'Iki kada galima kelti dainas. Balsavimas prasidės iškart po šio laiko.',
              'voting_end_date': 'Iki kada galima balsuoti (privaloma nustatyti ateities datą).',
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Užtikrinam, kad Django priimtų Flatpickr grąžinamą 24 val. formatą
+        for field_name in ('submission_start_date', 'submission_end_date', 'voting_end_date'):
+            self.fields[field_name].input_formats = ['%Y-%m-%d %H:%M', '%Y-%m-%dT%H:%M']
 
     def clean(self):
         cleaned_data = super().clean()
