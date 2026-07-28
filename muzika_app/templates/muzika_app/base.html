@@ -204,6 +204,12 @@
         main :where(a, button).rounded-md { border-radius: 0.75rem; }        /* Animacijos klasė */
         .animate-fadeIn { animation: fadeIn 0.4s ease-out; }
 
+        /* Balsavimo taškų mygtukas – pasirinkta būsena */
+        .point-btn-selected {
+            transform: scale(1.08);
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+        }
+
         /* =========================================================
            ŠVIESIOS TEMOS PERRAŠYMAI
            Daugelis šablonų naudoja fiksuotas TAMSIAS Tailwind klases

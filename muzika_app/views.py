@@ -683,19 +683,24 @@ def vote_game_view(request, group_code, game_id):
             return redirect('vote_game', group_code=group.code, game_id=game.id)
 
         try:
-            song_id_3_points = int(request.POST.get('points_3')) if request.POST.get('points_3') else None
-            song_id_2_points = int(request.POST.get('points_2')) if request.POST.get('points_2') else None
-            song_id_1_point = int(request.POST.get('points_1')) if request.POST.get('points_1') else None
+            points_song_map = {}  # {points: song_id}
+            for pts in [5, 4, 3, 2, 1]:
+                raw = request.POST.get(f'points_{pts}')
+                points_song_map[pts] = int(raw) if raw else None
         except (ValueError, TypeError):
              messages.error(request, "Neteisingi balsavimo duomenys.")
              return redirect('vote_game', group_code=group.code, game_id=game.id)
 
-        selected_song_ids = {song_id_3_points, song_id_2_points, song_id_1_point}
+        selected_song_ids = set(points_song_map.values())
         selected_song_ids.discard(None)
 
+        # Kiek taškų reikia paskirstyti: tiek, kiek yra dainų (bet ne daugiau kaip 5)
+        available_song_count = songs_to_vote_on.count()
+        required_count = min(5, available_song_count)
+
         errors = []
-        if len(selected_song_ids) != 3:
-            errors.append("Turite pasirinkti tris skirtingas dainas ir joms priskirti 1, 2 ir 3 taškus.")
+        if len(selected_song_ids) != required_count:
+            errors.append(f"Turite pasirinkti {required_count} skirtingas dainas ir joms priskirti aukščiausius taškus (pradedant nuo 5).")
 
         valid_song_ids = set(songs_to_vote_on.values_list('id', flat=True))
         for selected_id in selected_song_ids:
@@ -707,9 +712,7 @@ def vote_game_view(request, group_code, game_id):
             for error in errors: messages.error(request, error)
             # Išsaugom pateiktus duomenis, kad būtų galima atstatyti formoje
             submitted_data_map = {
-                'points_3': request.POST.get('points_3'), # Gaunam kaip stringą
-                'points_2': request.POST.get('points_2'),
-                'points_1': request.POST.get('points_1'),
+                f'points_{pts}': request.POST.get(f'points_{pts}') for pts in [5, 4, 3, 2, 1]
             }
         else:
             # --- Balsų Išsaugojimas ---
@@ -717,9 +720,9 @@ def vote_game_view(request, group_code, game_id):
                 with transaction.atomic():
                     Vote.objects.filter(game=game, voter=request.user).delete()
                     votes_to_create = []
-                    if song_id_3_points: votes_to_create.append(Vote(game=game, voter=request.user, song_id=song_id_3_points, points=3))
-                    if song_id_2_points: votes_to_create.append(Vote(game=game, voter=request.user, song_id=song_id_2_points, points=2))
-                    if song_id_1_point: votes_to_create.append(Vote(game=game, voter=request.user, song_id=song_id_1_point, points=1))
+                    for pts, song_id in points_song_map.items():
+                        if song_id:
+                            votes_to_create.append(Vote(game=game, voter=request.user, song_id=song_id, points=pts))
                     Vote.objects.bulk_create(votes_to_create)
                 messages.success(request, "Jūsų balsai sėkmingai išsaugoti!")
                 return redirect('group_games_list', group_code=group.code) # Pakeista iš group_admin
@@ -728,9 +731,7 @@ def vote_game_view(request, group_code, game_id):
             except Exception as e: messages.error(request, f"Įvyko netikėta klaida saugant balsus: {e}")
             # Jei įvyko klaida saugant, išsaugom pateiktus duomenis
             submitted_data_map = {
-                'points_3': request.POST.get('points_3'),
-                'points_2': request.POST.get('points_2'),
-                'points_1': request.POST.get('points_1'),
+                f'points_{pts}': request.POST.get(f'points_{pts}') for pts in [5, 4, 3, 2, 1]
             }
 
     # --- GET arba POST su klaidomis ---

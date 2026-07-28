@@ -198,6 +198,8 @@ class Song(models.Model):
 
 class Vote(models.Model):
     POINTS_CHOICES = [
+        (5, '5 taškai'),
+        (4, '4 taškai'),
         (3, '3 taškai'),
         (2, '2 taškai'),
         (1, '1 taškas'),
