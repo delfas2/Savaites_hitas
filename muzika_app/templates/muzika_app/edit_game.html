@@ -35,8 +35,13 @@
              <div>
                 <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ form.name.label }}</label>
                 {{ form.name }}
-                {% if form.name.errors %}<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.name.errors|striptags }}</p>{% endif %}
-                {% if form.name.help_text %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ form.name.help_text|safe }}</p>{% endif %}
+                {% if form.name.errors %}<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.name.errors|striptags }}</p>{% endif %}                {% if form.name.help_text %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ form.name.help_text|safe }}</p>{% endif %}
+            </div>
+             <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ form.description.label }}</label>
+                {{ form.description }}
+                {% if form.description.errors %}<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.description.errors|striptags }}</p>{% endif %}
+                {% if form.description.help_text %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ form.description.help_text|safe }}</p>{% endif %}
             </div>
              <div>
                 <label for="{{ form.submission_start_date.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ form.submission_start_date.label }}</label>
@@ -49,14 +54,8 @@
                 {{ form.submission_end_date }}
                 {% if form.submission_end_date.errors %}<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.submission_end_date.errors|striptags }}</p>{% endif %}
                  {% if form.submission_end_date.help_text %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ form.submission_end_date.help_text|safe }}</p>{% endif %}
-            </div>
-            <hr class="my-4 border-gray-200 dark:border-gray-600"> {# Skyriklis tarp datų grupių #}
-             <div>
-                <label for="{{ form.voting_start_date.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ form.voting_start_date.label }}</label>
-                {{ form.voting_start_date }}
-                {% if form.voting_start_date.errors %}<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.voting_start_date.errors|striptags }}</p>{% endif %}
-                 {% if form.voting_start_date.help_text %}<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ form.voting_start_date.help_text|safe }}</p>{% endif %}
-            </div>
+            </div>            <hr class="my-4 border-gray-200 dark:border-gray-600"> {# Skyriklis tarp datų grupių #}
+            <p class="text-xs text-gray-500 dark:text-gray-400">Balsavimas prasidės iškart pasibaigus dainų kėlimui.</p>
              <div>
                 <label for="{{ form.voting_end_date.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ form.voting_end_date.label }}</label>
                 {{ form.voting_end_date }}

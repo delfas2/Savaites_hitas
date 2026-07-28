@@ -131,8 +131,7 @@ def group_admin_view(request, group_code):
 
     active_games_qs = group.games.filter(
         models.Q(submission_start_date__lte=now, submission_end_date__gte=now) |
-        models.Q(voting_start_date__lte=now, voting_end_date__gte=now)
-    ).order_by('-created_at')
+        models.Q(voting_start_date__lte=now, voting_end_date__gte=now)    ).order_by('-created_at')
 
     for game in active_games_qs:
         if game.is_voting_active():
@@ -160,6 +159,13 @@ def group_admin_view(request, group_code):
             last_completed_game = latest_finished_game
             winners = list(latest_finished_game.winners.all()) # Gaunam laimėtojus iš M2M
 
+    # --- Dainos kėlimo/redagavimo modalui (tik kėlimo fazėje) ---
+    user_song = None
+    song_form = None
+    if active_game and active_phase == 'submission' and is_member:
+        user_song = Song.objects.filter(game=active_game, submitted_by=request.user).first()
+        song_form = SongForm(instance=user_song) if user_song else SongForm()
+
     context = {
         'group': group,
         'memberships': memberships,
@@ -170,6 +176,8 @@ def group_admin_view(request, group_code):
         'all_voted': all_voted,
         'last_completed_game': last_completed_game,
         'winners': winners,
+        'user_song': user_song,
+        'song_form': song_form,
     }
     return render(request, 'muzika_app/group_admin.html', context)
 
@@ -227,6 +235,84 @@ def my_groups_view(request):
     user_memberships = Membership.objects.filter(user=request.user).select_related('group').order_by('group__name')
     context = {'memberships': user_memberships}
     return render(request, 'muzika_app/my_groups.html', context)
+
+
+@login_required
+def my_songs_view(request):
+    """ Rodo prisijungusio vartotojo įkeltų dainų istoriją su taškais ir vietomis. """
+    now = timezone.now()
+
+    songs = (
+        Song.objects
+        .filter(submitted_by=request.user)
+        .select_related('game', 'game__group')
+        .annotate(total_points=Sum('votes__points'))
+        .order_by('-submitted_at')
+    )
+
+    songs_data = []
+    total_points_sum = 0
+    wins_count = 0
+
+    for song in songs:
+        game = song.game
+        points = song.total_points or 0
+        total_points_sum += points
+
+        # Nustatome etapą
+        if game.is_voting_finished():
+            status = 'ended'
+        elif game.voting_start_date and game.voting_start_date <= now:
+            status = 'voting'
+        else:
+            status = 'submission'
+
+        # Apskaičiuojame vietą (rank) tik kai balsavimas baigtas
+        rank = None
+        if status == 'ended':
+            ranked = list(
+                Song.objects.filter(game=game)
+                .annotate(tp=Sum('votes__points'))
+                .order_by('-tp')
+                .values_list('id', 'tp')
+            )
+            place = 0
+            last_points = None
+            for idx, (sid, tp) in enumerate(ranked, start=1):
+                if tp != last_points:
+                    place = idx
+                    last_points = tp
+                if sid == song.id:
+                    rank = place
+                    break
+
+        is_winner = game.winners.filter(id=request.user.id).exists() and rank == 1
+
+        if is_winner:
+            wins_count += 1
+
+        songs_data.append({
+            'song': song,
+            'game': game,
+            'group': game.group,
+            'points': points,
+            'status': status,
+            'rank': rank,
+            'is_winner': is_winner,
+        })
+
+    total_songs = len(songs_data)
+    avg_points = round(total_points_sum / total_songs, 1) if total_songs else 0
+
+    context = {
+        'songs_data': songs_data,
+        'total_songs': total_songs,
+        'total_points': total_points_sum,
+        'avg_points': avg_points,
+        'wins_count': wins_count,
+    }
+    return render(request, 'muzika_app/my_songs.html', context)
+
 
 
 # --- ŽAIDIMŲ VALDYMAS ---
@@ -343,8 +429,7 @@ def group_games_list_view(request, group_code):
     is_current_user_admin = request.user.is_superuser or (is_member and Membership.objects.filter(group=group, user=request.user, role=Membership.Role.ADMIN).exists())
 
     user_songs_map = {
-        song.game_id: song.id
-        for song in Song.objects.filter(game__in=games_qs, submitted_by=request.user).only('id', 'game_id')
+        song.game_id: song.id        for song in Song.objects.filter(game__in=games_qs, submitted_by=request.user).only('id', 'game_id')
     }
 
     games_list = []
@@ -352,10 +437,15 @@ def group_games_list_view(request, group_code):
         game.user_song_id = user_songs_map.get(game.id, None)
         games_list.append(game)
 
+    # Ar šiai grupei / vartotojui leidžiama kurti žaidimus (modalui)
+    can_create_game = (group.can_create_games or request.user.is_superuser) and is_current_user_admin
+
     context = {
         'group': group,
         'games': games_list,
         'is_current_user_admin': is_current_user_admin,
+        'game_form': GameForm() if can_create_game else None,
+        'can_create_game': can_create_game,
     }
     return render(request, 'muzika_app/group_games_list.html', context)
 

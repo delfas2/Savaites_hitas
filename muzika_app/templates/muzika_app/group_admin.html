@@ -4,207 +4,256 @@
 {% block title %}Grupės {{ group.name }} Administravimas{% endblock %}
 
 {% block content %}
-<h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">
-    Grupės "{{ group.name }}" Administravimas
-</h1>
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <div>
+        <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
+            GRUPĖS VALDYMAS
+        </span>
+        <h1 class="text-2xl lg:text-3xl font-black text-white mt-2">Grupė „{{ group.name }}“</h1>
+        <p class="text-xs text-gray-400">Valdykite narius, žaidimus ir grupės nustatymus</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+        <a href="{% url 'group_games_list' group_code=group.code %}" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs transition shadow flex items-center gap-1.5">
+            <i class="fa-solid fa-gamepad"></i> Žaidimai
+        </a>
+        <a href="{% url 'group_statistics' group_code=group.code %}" class="px-4 py-2 rounded-xl bg-brand-neon hover:brightness-110 text-white font-bold text-xs transition shadow flex items-center gap-1.5">
+            <i class="fa-solid fa-trophy"></i> Statistika
+        </a>
+    </div>
+</div>
 
 {# Rodyti pranešimus #}
 {% if messages %}
-    <div class="mb-6">
+    <div class="mb-6 space-y-2">
         {% for message in messages %}
-            <div class="p-3 rounded-md {% if message.tags == 'success' %} bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 {% elif message.tags == 'error' %} bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 {% elif message.tags == 'warning' %} bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-200 {% else %} bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 {% endif %}" role="alert">
+            <div class="p-3 rounded-xl text-xs font-medium border {% if message.tags == 'success' %} bg-emerald-500/10 text-emerald-300 border-emerald-500/30 {% elif message.tags == 'error' %} bg-red-500/10 text-red-300 border-red-500/30 {% elif message.tags == 'warning' %} bg-amber-500/10 text-amber-300 border-amber-500/30 {% else %} bg-brand-500/10 text-brand-100 border-brand-500/30 {% endif %}" role="alert">
                 {{ message }}
             </div>
         {% endfor %}
     </div>
 {% endif %}
 
-{# --- BLOKAS: DABAR VYKSTANTIS ŽAIDIMAS / PASKUTINIO NUGALĖTOJAS --- #}
+{# --- HERO BANERIS: DABAR VYKSTANTIS ŽAIDIMAS / PASKUTINIO NUGALĖTOJAS --- #}
 {% if active_game %}
-    <div class="mb-6 p-4 bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900 dark:to-cyan-900 border-l-4 border-teal-500 dark:border-teal-400 rounded-r-lg shadow">
-        <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-3">
-            <i data-lucide="zap" class="inline-block w-5 h-5 mr-2 text-teal-600 dark:text-teal-300"></i> Dabar Vyksta: {{ active_game.name }}
-        </h2>
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <div class="flex-grow">
+    <div class="relative overflow-hidden rounded-3xl p-6 lg:p-8 border border-gray-800 bg-gradient-to-br from-brand-cardBg via-brand-darkBg to-purple-950/40 glow-effect mb-8">
+        <div class="absolute -right-20 -top-20 w-72 h-72 bg-brand-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-20 -bottom-20 w-72 h-72 bg-brand-pink/20 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div class="space-y-3">
                 {% if active_phase == 'submission' %}
-                    <p class="text-gray-700 dark:text-gray-200 text-sm">
-                        <i data-lucide="upload-cloud" class="inline-block w-4 h-4 mr-1 text-gray-500 dark:text-gray-400 -mt-0.5"></i> Kėlimas aktyvus iki:
-                        <span class="font-medium">{{ active_game.submission_end_date|date:"Y-m-d H:i" }}</span>
-                    </p>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/20 text-teal-200 text-xs font-bold border border-teal-500/30">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> VYKSTA DAINŲ KĖLIMAS
+                    </div>
                 {% elif active_phase == 'voting' %}
-                    <p class="text-gray-700 dark:text-gray-200 text-sm">
-                        <i data-lucide="vote" class="inline-block w-4 h-4 mr-1 text-gray-500 dark:text-gray-400 -mt-0.5"></i> Balsavimas aktyvus iki:
-                        <span class="font-medium">{{ active_game.voting_end_date|date:"Y-m-d H:i" }}</span>
-                        {% if all_voted %}
-                            <span class="ml-2 text-green-600 dark:text-green-400 font-medium">(Visi nariai balsavo!)</span>
-                        {% endif %}
-                    </p>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-pink/20 text-brand-pink text-xs font-bold border border-brand-pink/30">
+                        <i class="fa-solid fa-fire"></i> VYKSTA BALSAVIMAS
+                    </div>
                 {% endif %}
-            </div>
-            <div class="flex items-center gap-2 flex-shrink-0">
+                <h2 class="text-2xl lg:text-4xl font-black text-white tracking-tight leading-tight">{{ active_game.name }}</h2>
+                {% if active_game.description %}
+                <p class="text-sm text-gray-300 max-w-2xl whitespace-pre-wrap">{{ active_game.description }}</p>
+                {% endif %}
+                <div class="flex flex-wrap items-center gap-4 text-xs pt-1">
+                    {% if active_phase == 'submission' %}
+                    <div class="bg-gray-900/80 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-gray-800 flex items-center gap-3">
+                        <i class="fa-regular fa-clock text-teal-400 text-base"></i>
+                        <div>
+                            <span class="block text-[10px] text-gray-400 uppercase font-semibold">Liko laiko iki kėlimo pabaigos</span>
+                            <span class="font-mono font-bold text-white text-sm countdown" data-deadline="{{ active_game.submission_end_date|date:'c' }}">–</span>
+                        </div>
+                    </div>
+                    <div class="bg-gray-900/80 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-gray-800 flex items-center gap-3">
+                        <i class="fa-solid fa-music text-teal-400 text-base"></i>
+                        <div>
+                            <span class="block text-[10px] text-gray-400 uppercase font-semibold">Įkelta dainų</span>
+                            <span class="font-mono font-bold text-white text-sm">{{ active_game.songs.count }}</span>
+                        </div>
+                    </div>
+                    {% elif active_phase == 'voting' %}
+                    <div class="bg-gray-900/80 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-gray-800 flex items-center gap-3">
+                        <i class="fa-regular fa-clock text-brand-pink text-base"></i>
+                        <div>
+                            <span class="block text-[10px] text-gray-400 uppercase font-semibold">Liko laiko balsuoti</span>
+                            <span class="font-mono font-bold text-white text-sm countdown" data-deadline="{{ active_game.voting_end_date|date:'c' }}">–</span>
+                        </div>
+                    </div>
+                    <div class="bg-gray-900/80 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-gray-800 flex items-center gap-3">
+                        <i class="fa-solid fa-music text-brand-pink text-base"></i>
+                        <div>
+                            <span class="block text-[10px] text-gray-400 uppercase font-semibold">Dainų konkurse</span>
+                            <span class="font-mono font-bold text-white text-sm">{{ active_game.songs.count }}</span>
+                        </div>
+                    </div>
+                        {% if all_voted %}
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
+                            <i class="fa-solid fa-circle-check"></i> Visi nariai balsavo!
+                        </span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>            {# CTA mygtukai #}
+            <div class="flex flex-wrap gap-2 lg:flex-col lg:items-stretch flex-shrink-0">
                 {% if active_phase == 'submission' %}
-                    <a href="{% url 'add_song' group_code=group.code game_id=active_game.id %}" class="inline-flex items-center px-3 py-1 bg-teal-600 text-white text-xs font-medium rounded-md shadow-sm hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
-                        <i data-lucide="music-4" class="w-3 h-3 mr-1"></i> Įkelti/Redaguoti
-                    </a>
+                    <button type="button" onclick="openSongModal()" class="px-6 py-3 rounded-xl bg-white text-gray-900 font-bold text-xs hover:bg-gray-100 transition shadow-xl hover:scale-105 active:scale-95 flex items-center gap-2 justify-center">
+                        <i class="fa-solid fa-music text-teal-600"></i> {% if user_song %}Redaguoti Mano Dainą{% else %}Įkelti Dainą{% endif %}
+                    </button>
                 {% elif active_phase == 'voting' %}
                     {% if all_voted %}
                         {% if is_current_user_admin %}
-                             <form action="{% url 'calculate_game_results' group_code=group.code game_id=active_game.id %}" method="POST" class="inline-block">
-                                 {% csrf_token %}
-                                 <button type="submit" class="inline-flex items-center px-3 py-1 bg-cyan-600 text-white text-xs font-medium rounded-md shadow-sm hover:bg-cyan-700" onclick="return confirm('Visi nariai balsavo. Ar tikrai norite apskaičiuoti rezultatus ir paskelbti laimėtoją?');">
-                                    <i data-lucide="trophy" class="w-3 h-3 mr-1"></i> Skelbti Nugalėtoją
+                            <form action="{% url 'calculate_game_results' group_code=group.code game_id=active_game.id %}" method="POST">
+                                {% csrf_token %}
+                                <button type="submit" class="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-brand-accent to-emerald-600 text-white font-bold text-xs hover:brightness-110 transition shadow-xl flex items-center gap-2 justify-center" onclick="return confirm('Visi nariai balsavo. Ar tikrai norite apskaičiuoti rezultatus ir paskelbti laimėtoją?');">
+                                    <i class="fa-solid fa-trophy"></i> Skelbti Nugalėtoją
                                 </button>
                             </form>
                         {% else %}
-                             <span class="text-xs text-gray-600 dark:text-gray-300 italic">Visi balsavo. Laukite rezultatų.</span>
+                            <span class="text-xs text-gray-300 italic px-4 py-3">Visi balsavo. Laukite rezultatų.</span>
                         {% endif %}
-                         <a href="{% url 'game_details' group_code=group.code game_id=active_game.id %}" title="Peržiūrėti detales" class="inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-500 text-xs font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-600">
-                            <i data-lucide="eye" class="w-3 h-3 mr-1"></i> Peržiūrėti
-                        </a>
                     {% else %}
-                        <a href="{% url 'vote_game' group_code=group.code game_id=active_game.id %}" class="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
-                            <i data-lucide="send" class="w-3 h-3 mr-1"></i> Balsuoti
-                        </a>
-                         <a href="{% url 'game_details' group_code=group.code game_id=active_game.id %}" title="Peržiūrėti detales" class="inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-500 text-xs font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-600">
-                            <i data-lucide="eye" class="w-3 h-3 mr-1"></i> Peržiūrėti
+                        <a href="{% url 'vote_game' group_code=group.code game_id=active_game.id %}" class="px-6 py-3 rounded-xl bg-white text-gray-900 font-bold text-xs hover:bg-gray-100 transition shadow-xl hover:scale-105 active:scale-95 flex items-center gap-2 justify-center">
+                            <i class="fa-solid fa-check-to-slot text-brand-600"></i> Balsuoti Už Dainas
                         </a>
                     {% endif %}
                 {% endif %}
-                 {# Peržiūrėti mygtukas, jei ne balsavimo fazė #}
-                 {% if active_phase != 'voting' %}
-                    <a href="{% url 'game_details' group_code=group.code game_id=active_game.id %}" title="Peržiūrėti detales" class="inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-500 text-xs font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-600">
-                        <i data-lucide="eye" class="w-3 h-3 mr-1"></i> Peržiūrėti
-                    </a>
-                 {% endif %}
-             </div>
+                <a href="{% url 'game_details' group_code=group.code game_id=active_game.id %}" class="px-6 py-3 rounded-xl glass-card text-white font-semibold text-xs hover:bg-gray-800/80 transition border border-gray-700 flex items-center gap-2 justify-center">
+                    <i class="fa-solid fa-eye text-brand-500"></i> Peržiūrėti Detales
+                </a>
+            </div>
         </div>
     </div>
 {% elif last_completed_game %}
-    <div class="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900 dark:to-orange-900 border-l-4 border-amber-500 dark:border-amber-400 rounded-r-lg shadow">
-        <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">
-            <i data-lucide="trophy" class="inline-block w-5 h-5 mr-2 text-amber-600 dark:text-amber-300"></i> Paskutinio žaidimo "{{ last_completed_game.name }}" rezultatai
-        </h2>
-        {% if winners %}
-            <p class="text-gray-700 dark:text-gray-200 mb-3">
-                Sveikiname laimėjus
-                <span class="font-semibold">
-                    {% for winner in winners %}
-                        {{ winner.get_full_name|default:winner.username }}{% if not forloop.last %}, {% endif %}
-                    {% endfor %}!
-                </span>
-                 Jūsų prizas - sugalvoti naują temą kitam žaidimui. 🎉
-            </p>
-
-            {# Mygtukas laimėtojui kurti naują žaidimą #}
-            {% if request.user in winners %}
-                 <a href="{% url 'create_game' group_code=group.code %}" class="inline-flex items-center px-4 py-2 mb-2 bg-emerald-600 text-white font-medium rounded-md shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 text-sm">
-                    <i data-lucide="plus-circle" class="w-4 h-4 mr-2"></i>
-                    Kurti naują žaidimą (Jūsų eilė!)
-                </a>
+    <div class="relative overflow-hidden rounded-3xl p-6 lg:p-8 border border-amber-500/40 bg-gradient-to-br from-amber-500/15 via-brand-cardBg to-transparent mb-8">
+        <div class="absolute -right-16 -top-16 w-64 h-64 bg-amber-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30 mb-3">
+                <i class="fa-solid fa-crown"></i> PASKUTINIO ŽAIDIMO REZULTATAI
+            </div>            <h2 class="text-xl lg:text-2xl font-black text-white mb-2">{{ last_completed_game.name }}</h2>
+            {% if last_completed_game.description %}
+            <p class="text-sm text-gray-300 mb-3 max-w-2xl whitespace-pre-wrap">{{ last_completed_game.description }}</p>
             {% endif %}
-
-            {# Nuoroda į DETALIUS balsavimo rezultatus #}
-             <a href="{% url 'game_voting_results' group_code=group.code game_id=last_completed_game.id %}" class="text-xs text-gray-500 dark:text-gray-400 hover:underline mt-1 inline-block align-middle {% if request.user in winners %}ml-3{% endif %}">
-                (Žiūrėti balsavimo rezultatus)
-            </a>
-        {% else %}
-            <p class="text-gray-600 dark:text-gray-400 italic">
-                 Šiame žaidime laimėtojai dar nepaskelbti arba jų nustatyti nepavyko.
-                 {% if is_current_user_admin and last_completed_game.is_voting_finished and not last_completed_game.winners.exists %}
-                     <form action="{% url 'calculate_game_results' group_code=group.code game_id=last_completed_game.id %}" method="POST" class="inline-block ml-2">
-                         {% csrf_token %}
-                         <button type="submit" class="text-xs text-cyan-600 dark:text-cyan-400 hover:underline" onclick="return confirm('Ar tikrai norite apskaičiuoti šio užbaigto žaidimo rezultatus dabar?');">
-                            (Apskaičiuoti dabar)
-                         </button>
-                     </form>
-                 {% endif %}
-            </p>
-             <a href="{% url 'game_details' group_code=group.code game_id=last_completed_game.id %}" class="text-xs text-gray-500 dark:text-gray-400 hover:underline mt-1 inline-block">
-                (Žiūrėti žaidimo detales)
-            </a>
-        {% endif %}
+            {% if winners %}
+                <p class="text-sm text-gray-300 mb-4">
+                    🎉 Sveikiname laimėjus
+                    <span class="font-bold text-amber-300">
+                        {% for winner in winners %}{{ winner.get_full_name|default:winner.username }}{% if not forloop.last %}, {% endif %}{% endfor %}!
+                    </span>
+                    Jūsų prizas — sugalvoti naują temą kitam žaidimui.
+                </p>
+                <div class="flex flex-wrap items-center gap-3">
+                    {% if request.user in winners %}
+                        <a href="{% url 'create_game' group_code=group.code %}" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-accent to-emerald-600 text-white font-bold text-xs hover:brightness-110 transition shadow-lg flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Kurti Naują Žaidimą (Jūsų eilė!)
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'game_voting_results' group_code=group.code game_id=last_completed_game.id %}" class="text-xs text-gray-400 hover:text-white hover:underline">
+                        Žiūrėti balsavimo rezultatus
+                    </a>
+                </div>
+            {% else %}
+                <p class="text-sm text-gray-400 italic">
+                    Šiame žaidime laimėtojai dar nepaskelbti arba jų nustatyti nepavyko.
+                    {% if is_current_user_admin and last_completed_game.is_voting_finished and not last_completed_game.winners.exists %}
+                        <form action="{% url 'calculate_game_results' group_code=group.code game_id=last_completed_game.id %}" method="POST" class="inline-block ml-2">
+                            {% csrf_token %}
+                            <button type="submit" class="text-xs text-brand-accent hover:underline" onclick="return confirm('Ar tikrai norite apskaičiuoti šio užbaigto žaidimo rezultatus dabar?');">(Apskaičiuoti dabar)</button>
+                        </form>
+                    {% endif %}
+                </p>
+            {% endif %}
+        </div>
     </div>
 {% else %}
-    <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg text-center">
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-            <i data-lucide="info" class="inline-block w-4 h-4 mr-1 -mt-0.5"></i> Šiuo metu šioje grupėje aktyvių žaidimų nėra. Ankstesnių žaidimų rezultatų taip pat nerasta.
+    <div class="glass-card rounded-3xl p-6 border border-gray-800 text-center mb-8">
+        <p class="text-sm text-gray-400">
+            <i class="fa-solid fa-circle-info mr-1 text-brand-500"></i> Šiuo metu šioje grupėje aktyvių žaidimų nėra. Ankstesnių žaidimų rezultatų taip pat nerasta.
         </p>
     </div>
 {% endif %}
-{# --- PABAIGA: Aktyvaus žaidimo / Laimėtojo blokas --- #}
+{# --- PABAIGA: Hero baneris --- #}
 
 
-{# --- BLOKAS: GRUPĖS INFORMACIJA IR ADMINISTRAVIMAS --- #}
-<div class="p-6 bg-white dark:bg-gray-700 rounded-lg shadow mb-6">
-    <h2 class="text-xl font-semibold text-gray-700 dark:text-white mb-3">Grupės Informacija</h2>
-     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div><p class="text-sm font-medium text-gray-500 dark:text-gray-400">Pavadinimas</p><p class="text-lg text-gray-900 dark:text-gray-100">{{ group.name }}</p></div>
-        <div><p class="text-sm font-medium text-gray-500 dark:text-gray-400">Prisijungimo Kodas</p><p class="text-lg font-mono text-indigo-600 dark:text-indigo-400">{{ group.code }}</p></div>
-        <div><p class="text-sm font-medium text-gray-500 dark:text-gray-400">Sukurta</p><p class="text-lg text-gray-900 dark:text-gray-100">{{ group.created_at|date:"Y-m-d H:i" }}</p></div>
+{# --- BLOKAS: GRUPĖS INFORMACIJA --- #}
+<div class="glass-card rounded-3xl p-6 border border-gray-800 mb-6">
+    <h2 class="text-base font-bold text-white mb-4 border-b border-gray-800 pb-3">Grupės Informacija</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase">Pavadinimas</p>
+            <p class="text-sm text-white font-medium">{{ group.name }}</p>
+        </div>
+        <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase">Prisijungimo Kodas</p>
+            <p class="text-sm font-mono font-bold text-brand-500 tracking-widest">{{ group.code }}</p>
+        </div>
+        <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase">Sukurta</p>
+            <p class="text-sm text-white">{{ group.created_at|date:"Y-m-d H:i" }}</p>
+        </div>
         {% if group.creator %}
-        <div class="md:col-span-1"><p class="text-sm font-medium text-gray-500 dark:text-gray-400">Kūrėjas</p><p class="text-lg text-gray-900 dark:text-gray-100">{{ group.creator.username }}</p></div>
+        <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase">Kūrėjas</p>
+            <p class="text-sm text-white">{{ group.creator.username }}</p>
+        </div>
         {% endif %}
     </div>
     {% if group.information %}
-    <div class="mb-6"><p class="text-sm font-medium text-gray-500 dark:text-gray-400">Papildoma Informacija</p><p class="text-gray-700 dark:text-gray-200 whitespace-pre-wrap">{{ group.information }}</p></div>
-    {% endif %}
-
-    <hr class="my-6 border-gray-200 dark:border-gray-600">
-    <h3 class="text-lg font-semibold text-gray-700 dark:text-white mb-3">Administravimo Veiksmai</h3>
-     <div class="flex flex-wrap gap-4">
-        <button disabled class="px-4 py-2 bg-green-500 text-white font-medium rounded-md shadow-sm opacity-50 cursor-not-allowed">Pridėti narį</button>
-        <button disabled class="px-4 py-2 bg-blue-500 text-white font-medium rounded-md shadow-sm opacity-50 cursor-not-allowed">Redaguoti Grupę</button>
-        <button disabled class="px-4 py-2 bg-red-600 text-white font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-700 opacity-50 cursor-not-allowed">Ištrinti Grupę</button>
+    <div>
+        <p class="text-[10px] font-semibold text-gray-400 uppercase mb-1">Papildoma Informacija</p>
+        <p class="text-sm text-gray-300 whitespace-pre-wrap">{{ group.information }}</p>
     </div>
+    {% endif %}
 </div>
 
 
 {# --- BLOKAS: GRUPĖS NARIAI --- #}
-<div class="p-6 bg-white dark:bg-gray-700 rounded-lg shadow mb-6">
-    <h3 class="text-xl font-semibold text-gray-700 dark:text-white mb-3">Grupės Nariai</h3>
+<div class="glass-card rounded-3xl p-6 border border-gray-800 mb-6">
+    <div class="flex items-center justify-between mb-4 border-b border-gray-800 pb-3">
+        <h3 class="text-base font-bold text-white">Grupės Nariai</h3>
+        <span class="text-xs text-gray-400">Viso: <strong class="text-white">{{ memberships|length }}</strong></span>
+    </div>
     <div class="overflow-x-auto">
         {% if memberships %}
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
-                <thead class="bg-gray-50 dark:bg-gray-800">
-                    <tr>
-                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Vardas Pavardė</th>
-                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">El. Paštas</th>
-                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Rolė</th>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="text-[10px] font-bold text-gray-400 uppercase border-b border-gray-800">
+                        <th class="pb-3 pr-2">Vardas Pavardė</th>
+                        <th class="pb-3 pr-2">El. Paštas</th>
+                        <th class="pb-3 pr-2">Rolė</th>
                         {% if is_current_user_admin %}
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Keisti Rolę</th>
+                            <th class="pb-3 text-right">Keisti Rolę</th>
                         {% endif %}
                     </tr>
                 </thead>
-                <tbody class="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
+                <tbody class="divide-y divide-gray-800/60 text-xs">
                     {% for membership in memberships %}
-                        <tr>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                                {{ membership.user.get_full_name|default:membership.user.username }}
+                        <tr class="hover:bg-brand-500/5 transition">
+                            <td class="py-3 pr-2 font-semibold text-white">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="w-7 h-7 rounded-full bg-gradient-to-tr from-brand-600 to-brand-pink flex items-center justify-center text-white text-[10px] font-bold uppercase">{{ membership.user.get_full_name|default:membership.user.username|slice:":1" }}</span>
+                                    {{ membership.user.get_full_name|default:membership.user.username }}
+                                </span>
                             </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                                {{ membership.user.email }}
-                            </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm font-semibold">
+                            <td class="py-3 pr-2 text-gray-400">{{ membership.user.email }}</td>
+                            <td class="py-3 pr-2">
                                 {% if membership.role == 'ADMIN' %}
-                                    <span class="text-indigo-600 dark:text-indigo-400">{{ membership.get_role_display }}</span>
+                                    <span class="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold">{{ membership.get_role_display }}</span>
                                 {% else %}
-                                    <span class="text-gray-700 dark:text-gray-200">{{ membership.get_role_display }}</span>
+                                    <span class="px-2.5 py-1 rounded-full bg-gray-800 text-gray-300 text-[10px] font-bold">{{ membership.get_role_display }}</span>
                                 {% endif %}
                             </td>
                             {% if is_current_user_admin %}
-                            <td class="px-4 py-4 whitespace-nowrap text-sm">
+                            <td class="py-3 text-right">
                                 {% if membership.user != request.user or admin_count > 1 %}
-                                    <form action="{% url 'change_member_role' group_code=group.code member_id=membership.user.id %}" method="POST" class="inline-flex items-center gap-2">
+                                    <form action="{% url 'change_member_role' group_code=group.code member_id=membership.user.id %}" method="POST" class="inline-flex items-center gap-2 justify-end">
                                         {% csrf_token %}
-                                        <select name="role" class="text-xs p-1 border border-gray-300 dark:border-gray-500 rounded-md bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
+                                        <select name="role" class="text-xs !w-auto !py-1">
                                             <option value="ADMIN" {% if membership.role == 'ADMIN' %}selected{% endif %}>Administratorius</option>
                                             <option value="MEMBER" {% if membership.role == 'MEMBER' %}selected{% endif %}>Narys</option>
                                         </select>
-                                        <button type="submit" class="text-xs px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-nowrap">Keisti</button>
+                                        <button type="submit" class="text-xs px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-bold whitespace-nowrap transition">Keisti</button>
                                     </form>
                                 {% else %}
-                                    <span class="text-xs text-gray-400 dark:text-gray-500 italic">Negalima keisti</span>
+                                    <span class="text-xs text-gray-500 italic">Negalima keisti</span>
                                 {% endif %}
                             </td>
                             {% endif %}
@@ -213,44 +262,60 @@
                 </tbody>
             </table>
         {% else %}
-            <p class="text-gray-500 dark:text-gray-400 px-4 py-4">Šioje grupėje narių kol kas nėra.</p>
+            <p class="text-gray-400 py-4 text-sm">Šioje grupėje narių kol kas nėra.</p>
         {% endif %}
     </div>
 </div>
 
 
-{# --- BLOKAS: Nuorodos į Žaidimus ir Statistiką --- #}
-<div class="mt-6 p-4 bg-white dark:bg-gray-700 rounded-lg shadow">
-    <div class="flex flex-wrap justify-between items-center gap-4">
-        <div>
-            <h3 class="text-xl font-semibold text-gray-700 dark:text-white mb-1">Žaidimai</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Peržiūrėti šios grupės žaidimų sąrašą.</p>
-        </div>
-        <a href="{% url 'group_games_list' group_code=group.code %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-700 text-sm flex-shrink-0">
-            Žaidimų sąrašas
-            <i data-lucide="arrow-right" class="w-4 h-4 ml-2"></i>
-        </a>
-    </div>
-    <hr class="my-4 border-gray-200 dark:border-gray-600">
-     <div class="flex flex-wrap justify-between items-center gap-4">
-        <div>
-            <h3 class="text-xl font-semibold text-gray-700 dark:text-white mb-1">Statistika</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Peržiūrėti šios grupės narių statistiką.</p>
-        </div>
-         <a href="{% url 'group_statistics' group_code=group.code %}" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white font-medium rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-gray-700 text-sm flex-shrink-0">
-             Grupės statistika
-            <i data-lucide="bar-chart-3" class="w-4 h-4 ml-2"></i>
-        </a>
-    </div>
-</div>
-
-
 {# Grįžimo nuoroda #}
- <div class="mt-8">
-    <a href="{% url 'my_groups' %}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
-        &larr; Grįžti į mano grupes
+<div class="mt-8">
+    <a href="{% url 'my_groups' %}" class="text-brand-500 hover:text-brand-100 hover:underline text-sm inline-flex items-center gap-1.5">
+        <i class="fa-solid fa-arrow-left text-xs"></i> Grįžti į mano grupes
     </a>
 </div>
+
+
+{# --- MODALAS: SIŪLYTI / REDAGUOTI DAINĄ --- #}
+{% if active_game and active_phase == 'submission' and song_form %}
+<div id="songModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-200">
+    <div class="glass-panel rounded-3xl p-6 lg:p-8 max-w-md w-full mx-4 border border-gray-800 shadow-2xl relative">
+        <button type="button" onclick="closeSongModal()" class="absolute top-5 right-5 text-gray-400 hover:text-white">
+            <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-9 h-9 rounded-xl bg-brand-500/20 text-brand-500 flex items-center justify-center">
+                <i class="fa-solid fa-music"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-white">{% if user_song %}Redaguoti Dainą{% else %}Siūlyti Dainą Konkursui{% endif %}</h3>
+                <p class="text-[11px] text-gray-400">Žaidimas: {{ active_game.name }}</p>
+            </div>
+        </div>
+
+        <form action="{% if user_song %}{% url 'edit_song' group_code=group.code game_id=active_game.id song_id=user_song.id %}{% else %}{% url 'add_song' group_code=group.code game_id=active_game.id %}{% endif %}" method="POST" class="space-y-3">
+            {% csrf_token %}
+            <div>
+                <label for="{{ song_form.title.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ song_form.title.label }}</label>
+                {{ song_form.title }}
+                {% if song_form.title.errors %}<p class="mt-1 text-xs text-red-400">{{ song_form.title.errors|striptags }}</p>{% endif %}
+            </div>
+            <div>
+                <label for="{{ song_form.youtube_url.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ song_form.youtube_url.label }}</label>
+                {{ song_form.youtube_url }}
+                {% if song_form.youtube_url.errors %}<p class="mt-1 text-xs text-red-400">{{ song_form.youtube_url.errors|striptags }}</p>{% endif %}
+            </div>
+            <div class="pt-2 flex justify-end gap-2">
+                <button type="button" onclick="closeSongModal()" class="px-4 py-2 rounded-xl bg-gray-800 text-gray-300 text-xs font-bold hover:bg-gray-700 transition">Atšaukti</button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-lg transition">
+                    {% if user_song %}Išsaugoti Pakeitimus{% else %}Pateikti Dainą{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
 
 
 {# Script blokas ikonoms #}
@@ -258,10 +323,56 @@
     document.addEventListener('DOMContentLoaded', () => {
          if (typeof lucide !== 'undefined') {
              lucide.createIcons();
-         } else {
-            console.error("Lucide library not loaded when group_admin.html tried to init icons.");
+         }
+
+         // --- Gyvas atgalinis laikmatis iki etapo pabaigos ---
+         const countdownEls = document.querySelectorAll('.countdown');
+         function updateCountdowns() {
+             const now = new Date().getTime();
+             countdownEls.forEach(el => {
+                 const deadline = new Date(el.dataset.deadline).getTime();
+                 let diff = deadline - now;
+                 if (isNaN(deadline)) { el.textContent = '–'; return; }
+                 if (diff <= 0) {
+                     el.textContent = 'Etapas baigėsi';
+                     el.classList.add('text-red-400');
+                     return;
+                 }
+                 const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                 const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                 const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                 const s = Math.floor((diff % (1000 * 60)) / 1000);
+                 let out = '';
+                 if (d > 0) out += d + ' d. ';
+                 out += h + ' val. ' + m + ' min. ' + s + ' s.';
+                 el.textContent = out;
+             });
+         }         if (countdownEls.length > 0) {
+             updateCountdowns();
+             setInterval(updateCountdowns, 1000);
          }
      });
+
+    // --- Dainos modalo valdymas ---
+    function openSongModal() {
+        const m = document.getElementById('songModal');
+        if (m) m.classList.remove('opacity-0', 'pointer-events-none');
+    }
+    function closeSongModal() {
+        const m = document.getElementById('songModal');
+        if (m) m.classList.add('opacity-0', 'pointer-events-none');
+    }
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeSongModal();
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+        const m = document.getElementById('songModal');
+        if (m) {
+            m.addEventListener('click', function(e) {
+                if (e.target === m) closeSongModal();
+            });
+        }
+    });
 </script>
 
 {% endblock %} {# Uždaro content bloką #}

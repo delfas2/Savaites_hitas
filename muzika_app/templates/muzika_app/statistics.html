@@ -4,48 +4,97 @@
 {% block title %}Statistika: {{ group.name }}{% endblock %} {# Rodo grupės pavadinimą #}
 
 {% block content %}
-<h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">
-    Grupės "{{ group.name }}" Statistika {# Rodo grupės pavadinimą #}
-</h1>
+<div class="mb-8">
+    <h1 class="text-2xl lg:text-3xl font-black text-white">Statistika ir Garbės Lenta</h1>
+    <p class="text-xs text-gray-400 mt-1">Grupė „{{ group.name }}“ — geriausi muzikos kuratoriai ir aktyvumas</p>
+</div>
+
+{# --- Garbės lentos podiumas (Top 3 laimėtojai) --- #}
+{% if top_winners %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    {% for user_stat in top_winners|slice:":3" %}
+        {% if forloop.counter == 1 %}
+        <div class="glass-card rounded-3xl p-6 border border-amber-500/30 bg-gradient-to-b from-amber-500/10 to-transparent text-center relative overflow-hidden order-1 md:order-2">
+            <div class="absolute -top-3 -right-3 w-16 h-16 bg-amber-500/20 rounded-full blur-xl"></div>
+            <div class="inline-flex p-3 bg-amber-500/20 text-amber-400 rounded-2xl mb-4 text-xl font-black">🏆 #1 Garbės Narys</div>
+            <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-500 to-brand-pink flex items-center justify-center text-white text-2xl font-black mx-auto ring-4 ring-amber-500/50 mb-3 uppercase">{{ user_stat.get_full_name|default:user_stat.username|slice:":1" }}</div>
+            <h3 class="font-extrabold text-white text-base">{{ user_stat.get_full_name|default:user_stat.username }}</h3>
+            <p class="text-xs text-gray-400 mb-4">{{ group.name }}</p>
+            <div class="bg-gray-900/80 p-3 rounded-2xl border border-gray-800">
+                <span class="block text-[10px] text-gray-400 uppercase font-semibold">Laimėti Konkursai</span>
+                <span class="text-lg font-extrabold text-amber-400">{{ user_stat.num_wins }} {% if user_stat.num_wins == 1 %}pergalė{% elif user_stat.num_wins < 10 %}pergalės{% else %}pergalių{% endif %}</span>
+            </div>
+        </div>
+        {% elif forloop.counter == 2 %}
+        <div class="glass-card rounded-3xl p-6 border border-gray-700 text-center order-2 md:order-1">
+            <div class="inline-flex p-3 bg-gray-700/30 text-gray-300 rounded-2xl mb-4 text-xl font-black">🥈 #2 Garbės Narys</div>
+            <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-gray-500 to-gray-700 flex items-center justify-center text-white text-2xl font-black mx-auto ring-4 ring-gray-400/30 mb-3 uppercase">{{ user_stat.get_full_name|default:user_stat.username|slice:":1" }}</div>
+            <h3 class="font-extrabold text-white text-base">{{ user_stat.get_full_name|default:user_stat.username }}</h3>
+            <p class="text-xs text-gray-400 mb-4">{{ group.name }}</p>
+            <div class="bg-gray-900/80 p-3 rounded-2xl border border-gray-800">
+                <span class="block text-[10px] text-gray-400 uppercase font-semibold">Laimėti Konkursai</span>
+                <span class="text-lg font-extrabold text-gray-200">{{ user_stat.num_wins }} {% if user_stat.num_wins == 1 %}pergalė{% elif user_stat.num_wins < 10 %}pergalės{% else %}pergalių{% endif %}</span>
+            </div>
+        </div>
+        {% else %}
+        <div class="glass-card rounded-3xl p-6 border border-amber-800/30 text-center order-3">
+            <div class="inline-flex p-3 bg-amber-900/30 text-amber-600 rounded-2xl mb-4 text-xl font-black">🥉 #3 Garbės Narys</div>
+            <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-700 to-amber-900 flex items-center justify-center text-white text-2xl font-black mx-auto ring-4 ring-amber-700/30 mb-3 uppercase">{{ user_stat.get_full_name|default:user_stat.username|slice:":1" }}</div>
+            <h3 class="font-extrabold text-white text-base">{{ user_stat.get_full_name|default:user_stat.username }}</h3>
+            <p class="text-xs text-gray-400 mb-4">{{ group.name }}</p>
+            <div class="bg-gray-900/80 p-3 rounded-2xl border border-gray-800">
+                <span class="block text-[10px] text-gray-400 uppercase font-semibold">Laimėti Konkursai</span>
+                <span class="text-lg font-extrabold text-amber-600">{{ user_stat.num_wins }} {% if user_stat.num_wins == 1 %}pergalė{% elif user_stat.num_wins < 10 %}pergalės{% else %}pergalių{% endif %}</span>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
     {# --- Daugiausiai laimėjimų --- #}
-    <div class="p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
-        <h2 class="text-xl font-semibold text-gray-700 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-600 pb-2">
-            <i data-lucide="award" class="inline-block w-5 h-5 mr-1 text-yellow-500 -mt-1"></i> Daugiausiai Laimėjimų Grupėje
+    <div class="glass-card rounded-3xl p-6 border border-gray-800">
+        <h2 class="text-base font-bold text-white mb-4 border-b border-gray-800 pb-3 flex items-center gap-2">
+            <i class="fa-solid fa-trophy text-amber-400"></i> Daugiausiai Laimėjimų Grupėje
         </h2>
         {% if top_winners %}
-            <ol class="list-decimal list-inside space-y-2">
+            <ol class="space-y-2">
                 {% for user_stat in top_winners %}
-                    <li class="text-sm {% if forloop.first %}font-semibold text-lg{% endif %}">
-                       <span class="font-medium text-gray-900 dark:text-gray-100"> {{ user_stat.get_full_name|default:user_stat.username }}</span>
-                       - <span class="text-gray-600 dark:text-gray-300">{{ user_stat.num_wins }} {% if user_stat.num_wins == 1 %}laimėjimas{% elif user_stat.num_wins > 1 and user_stat.num_wins < 10 %}laimėjimai{% else %}laimėjimų{% endif %}</span>
+                    <li class="flex items-center justify-between p-2.5 rounded-xl hover:bg-brand-500/5 transition text-sm">
+                        <span class="flex items-center gap-3">
+                            <span class="w-6 text-center font-mono font-bold {% if forloop.first %}text-amber-400{% else %}text-gray-500{% endif %}">{{ forloop.counter }}</span>
+                            <span class="font-medium text-white">{{ user_stat.get_full_name|default:user_stat.username }}</span>
+                        </span>
+                        <span class="font-mono font-bold text-brand-accent">{{ user_stat.num_wins }} {% if user_stat.num_wins == 1 %}laimėjimas{% elif user_stat.num_wins < 10 %}laimėjimai{% else %}laimėjimų{% endif %}</span>
                     </li>
                 {% endfor %}
             </ol>
         {% else %}
-            <p class="text-sm text-gray-500 dark:text-gray-400 italic">Šioje grupėje kol kas nėra duomenų apie laimėtojus.</p>
+            <p class="text-sm text-gray-500 italic">Šioje grupėje kol kas nėra duomenų apie laimėtojus.</p>
         {% endif %}
     </div>
 
     {# --- Daugiausiai taškų (Gautų) --- #}
-    <div class="p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
-        <h2 class="text-xl font-semibold text-gray-700 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-600 pb-2">
-            <i data-lucide="star" class="inline-block w-5 h-5 mr-1 text-orange-500 -mt-1"></i> Taškų Reitingas Grupėje (Gauti Taškai)
+    <div class="glass-card rounded-3xl p-6 border border-gray-800">
+        <h2 class="text-base font-bold text-white mb-4 border-b border-gray-800 pb-3 flex items-center gap-2">
+            <i class="fa-solid fa-star text-brand-pink"></i> Taškų Reitingas (Gauti Taškai)
         </h2>
          {% if points_ranking %}
-            <ol class="list-decimal list-inside space-y-2">
+            <ol class="space-y-2">
                 {% for user_stat in points_ranking %}
-                    <li class="text-sm {% if forloop.first %}font-semibold text-lg{% endif %}">
-                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ user_stat.get_full_name|default:user_stat.username }}</span>
-                         {# Naudojam 'total_score_received' ir 'score_ending' iš context #}
-                         - <span class="text-gray-600 dark:text-gray-300">{{ user_stat.total_score_received }} {{ user_stat.score_ending }}</span>
+                    <li class="flex items-center justify-between p-2.5 rounded-xl hover:bg-brand-500/5 transition text-sm">
+                        <span class="flex items-center gap-3">
+                            <span class="w-6 text-center font-mono font-bold {% if forloop.first %}text-amber-400{% else %}text-gray-500{% endif %}">{{ forloop.counter }}</span>
+                            <span class="font-medium text-white">{{ user_stat.get_full_name|default:user_stat.username }}</span>
+                        </span>
+                        <span class="font-mono font-bold text-brand-500">{{ user_stat.total_score_received }} {{ user_stat.score_ending }}</span>
                     </li>
                 {% endfor %}
             </ol>
         {% else %}
-            <p class="text-sm text-gray-500 dark:text-gray-400 italic">Šioje grupėje kol kas nėra duomenų apie gautus taškus.</p>
+            <p class="text-sm text-gray-500 italic">Šioje grupėje kol kas nėra duomenų apie gautus taškus.</p>
         {% endif %}
     </div>
 
@@ -53,8 +102,8 @@
 
 {# Grįžimo nuoroda #}
 <div class="mt-8">
-    <a href="{% url 'group_admin' group_code=group.code %}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
-        &larr; Grįžti į grupės administravimą
+    <a href="{% url 'group_admin' group_code=group.code %}" class="text-brand-500 hover:text-brand-100 hover:underline text-sm inline-flex items-center gap-1.5">
+        <i class="fa-solid fa-arrow-left text-xs"></i> Grįžti į grupės administravimą
     </a>
 </div>
 

@@ -75,12 +75,16 @@ class Game(models.Model):
     group = models.ForeignKey(
         Group,
         on_delete=models.CASCADE,
-        related_name='games',
-        verbose_name="Grupė"
+        related_name='games',        verbose_name="Grupė"
     )
     name = models.CharField(
         max_length=150,
         verbose_name="Žaidimo tema / pavadinimas"
+    )
+    description = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Žaidimo aprašymas"
     )
     created_at = models.DateTimeField(
         auto_now_add=True,

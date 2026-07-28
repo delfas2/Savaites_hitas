@@ -1,126 +1,417 @@
-{% comment %} /Users/justinaszamarys/Library/Mobile Documents/com~apple~CloudDocs/_Python_duomenys/Muzika/muzika/muzika_app/templates/muzika_app/base.html {% endcomment %}
+{# muzika_app/templates/muzika_app/base.html #}
 <!DOCTYPE html>
-<html lang="lt">
+<html lang="lt" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Savaitės Hit'as{% endblock %}</title>
+    <title>{% block title %}Savaitės Hitas{% endblock %}</title>
+    {# Temos inicializacija PRIEŠ stilius, kad išvengtume mirgėjimo #}
+    <script>
+        (function() {
+            try {
+                var saved = localStorage.getItem('theme');
+                if (saved === 'light') {
+                    document.documentElement.classList.remove('dark');
+                } else {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
     {# Tailwind CSS iš CDN #}
     <script src="https://cdn.tailwindcss.com"></script>
-    {# Lucide Icons iš CDN #}
+    {# Google Fonts & Font Awesome #}
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    {# Lucide Icons iš CDN (turinio puslapiai naudoja data-lucide) #}
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    {# PAŠALINTAS PROBLEMINIS SCRIPT BLOKAS IŠ ČIA #}
-    <style>
-        /* Papildomi minimalūs stiliai */
-        body {
-            display: flex; /* Naudojame flexbox pagrindiniam išdėstymui */
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f3ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            accent: '#10b981',
+                            neon: '#8b5cf6',
+                            pink: '#ec4899',
+                            gold: '#f59e0b',
+                            darkBg: '#0b0f19',
+                            cardBg: '#131b2e',
+                            glass: 'rgba(19, 27, 46, 0.75)'
+                        }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'spin-slow': 'spin 6s linear infinite',
+                        'fadeIn': 'fadeIn 0.4s ease-out',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-6px)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(8px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        }
+                    }
+                }
+            }
         }
-        /* Užtikriname, kad šoninis meniu užimtų visą aukštį */
-        .h-screen-minus-header { /* Pervadinta, kad būtų aiškiau */
-             height: 100vh;
+    </script>
+    <style>        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+            transition: background-color .3s ease, color .3s ease;
+        }
+        /* Tamsi tema (numatytoji) */
+        html.dark {
+            --bg: #0b0f19;
+            --text: #f3f4f6;
+            --panel: rgba(19, 27, 46, 0.75);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --card: rgba(26, 36, 60, 0.55);
+            --card-border: rgba(255, 255, 255, 0.06);
+            --input-bg: rgba(11, 15, 25, 0.8);
+            --input-border: #1f293d;
+            --heading: #f3f4f6;
+            --muted: #9ca3af;
+            --strong-text: #e5e7eb;
+        }
+        /* Šviesi tema */
+        html:not(.dark) {
+            --bg: #f1f5f9;
+            --text: #1e293b;
+            --panel: rgba(255, 255, 255, 0.85);
+            --panel-border: rgba(15, 23, 42, 0.08);
+            --card: rgba(255, 255, 255, 0.9);
+            --card-border: rgba(15, 23, 42, 0.08);
+            --input-bg: #ffffff;
+            --input-border: #cbd5e1;
+            --heading: #0f172a;
+            --muted: #64748b;
+            --strong-text: #1e293b;
+        }
+        .glass-panel {
+            background: var(--panel);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--panel-border);
+        }
+        .glass-card {
+            background: var(--card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.2);
+        }
+        .glow-effect { position: relative; }
+        .glow-effect::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: linear-gradient(45deg, #6366f1, #ec4899, #8b5cf6, #10b981);
+            border-radius: inherit;
+            z-index: -1;
+            filter: blur(14px);
+            opacity: 0.3;
+            transition: opacity 0.3s ease;
+        }
+        .glow-effect:hover::before { opacity: 0.55; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        html.dark ::-webkit-scrollbar-thumb { background: #1f293d; }
+        ::-webkit-scrollbar-thumb:hover { background: #374151; }
+        .nav-link.active {
+            background-color: #4f46e5;
+            color: #fff;
         }
 
-        /* Galima pridėti Inter šriftą per Google Fonts arba palikti numatytąjį */
-        /* @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; } */
+        /* =========================================================
+           GLOBALŪS STILIAI – automatiškai suvienodina visus senus
+           puslapius (formos, kortelės, lentelės) su nauju dizainu.
+           Naudojama :where() kad specifiškumas būtų 0 ir Tailwind
+           utility klasės galėtų perrašyti, kur reikia.
+           ========================================================= */
+
+        /* Kortelės: baltas fonas -> glass */
+        main :where(.bg-white, .dark\:bg-gray-700, .dark\:bg-gray-800) {
+            background: var(--card) !important;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+        }
+
+        /* Suapvalinimas kortelėms */
+        main :where(.rounded-lg, .rounded-md.shadow, .shadow) {
+            border-radius: 1rem;
+        }
+
+        /* Formų laukai (input, select, textarea) – vienodas stilius */
+        main :where(input[type="text"], input[type="email"], input[type="password"],
+                    input[type="url"], input[type="date"], input[type="datetime-local"],
+                    input[type="number"], input[type="search"], select, textarea) {
+            background-color: var(--input-bg) !important;
+            border: 1px solid var(--input-border) !important;
+            color: var(--text) !important;
+            border-radius: 0.75rem !important;
+            padding: 0.55rem 0.85rem !important;
+            width: 100%;
+            transition: border-color .2s ease, box-shadow .2s ease;
+        }
+        main :where(input, select, textarea):focus {
+            outline: none !important;
+            border-color: #6366f1 !important;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important;
+        }
+        main :where(input::placeholder, textarea::placeholder) { color: var(--muted); }
+        main select option { background-color: var(--input-bg); color: var(--text); }
+
+        /* Lentelės */
+        main table thead :where(tr, th) {
+            background: transparent !important;
+            color: var(--muted) !important;
+            border-color: var(--card-border) !important;
+        }
+        main table tbody tr { transition: background .2s ease; }
+        main table tbody tr:hover { background: rgba(99, 102, 241, 0.06) !important; }
+        main table :where(td, th) { border-color: var(--card-border) !important; }
+
+        /* Antraštės */
+        main :where(h1, h2, h3, h4) { color: var(--heading); }
+
+        /* Tekstas, kuris buvo tamsus ant balto */
+        main :where(.text-gray-800, .text-gray-900, .text-gray-700) { color: var(--strong-text) !important; }
+        main :where(.text-gray-600, .text-gray-500) { color: var(--muted) !important; }
+
+        /* Mygtukų suapvalinimas */
+        main :where(a, button).rounded-md { border-radius: 0.75rem; }        /* Animacijos klasė */
+        .animate-fadeIn { animation: fadeIn 0.4s ease-out; }
+
+        /* =========================================================
+           ŠVIESIOS TEMOS PERRAŠYMAI
+           Daugelis šablonų naudoja fiksuotas TAMSIAS Tailwind klases
+           (text-white, bg-gray-900, border-gray-800 ...). Šviesioje
+           temoje jos atrodo blogai, todėl čia jas suvienodinam.
+           ========================================================= */
+        html:not(.dark) {
+            color-scheme: light;
+        }
+
+        /* --- Tekstų spalvos --- */
+        html:not(.dark) .text-white { color: #0f172a !important; }
+        html:not(.dark) .text-gray-100,
+        html:not(.dark) .text-gray-200,
+        html:not(.dark) .text-gray-300 { color: #334155 !important; }
+        html:not(.dark) .text-gray-400,
+        html:not(.dark) .text-gray-500 { color: #64748b !important; }
+
+        /* Gradientinės antraštės (bg-clip-text) – pakeičiam į tamsų gradientą */
+        html:not(.dark) .bg-gradient-to-r.from-white,
+        html:not(.dark) h1 .from-white {
+            background-image: linear-gradient(to right, #0f172a, #334155, #4f46e5) !important;
+        }        /* --- Fonai --- */
+        html:not(.dark) .bg-gray-900,
+        html:not(.dark) .bg-gray-800,
+        html:not(.dark) [class*="bg-gray-900/"],
+        html:not(.dark) [class*="bg-gray-800/"] {
+            background-color: rgba(255, 255, 255, 0.85) !important;
+        }
+        html:not(.dark) .bg-brand-darkBg,
+        html:not(.dark) .bg-brand-cardBg { background-color: #ffffff !important; }
+
+        /* --- Kraštinės --- */
+        html:not(.dark) .border-gray-800,
+        html:not(.dark) .border-gray-700,
+        html:not(.dark) [class*="border-gray-800/"],
+        html:not(.dark) [class*="border-gray-700/"] {
+            border-color: #e2e8f0 !important;
+        }
+        html:not(.dark) .divide-gray-800 > :not([hidden]) ~ :not([hidden]),
+        html:not(.dark) [class*="divide-gray-800/"] > :not([hidden]) ~ :not([hidden]) {
+            border-color: #e2e8f0 !important;
+        }
+
+        /* --- Hero baneris (tamsus gradientas) šviesioje temoje --- */
+        html:not(.dark) .bg-gradient-to-br.from-brand-cardBg {
+            background-image: linear-gradient(to bottom right, #eef2ff, #ffffff, #faf5ff) !important;
+        }
+
+        /* Stiklo „chip'ai" hero banerio viduje (buvo bg-gray-900/80) */
+        html:not(.dark) [class*="bg-gray-900/"].backdrop-blur-md {
+            background-color: rgba(255, 255, 255, 0.9) !important;
+        }
+
+        /* Navigacijos konteineris ir user mygtukai */
+        html:not(.dark) header { box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06); }
+
+        /* Modalų fonas šiek tiek šviesesnis */
+        html:not(.dark) [class*="bg-black/"] { background-color: rgba(15, 23, 42, 0.45) !important; }
+
+        /* Footeris */
+        html:not(.dark) footer { background-color: rgba(255,255,255,0.5); }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-800">
+<body class="min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
 
-    {# ŠONINĖ JUOSTA (SIDEBAR) #}
-    <aside class="flex flex-col w-64 h-screen px-5 py-8 overflow-y-auto bg-indigo-700 dark:bg-indigo-900 border-r rtl:border-r-0 rtl:border-l border-indigo-800 dark:border-indigo-700 flex-shrink-0">
-        {# Logo ir Pavadinimas #}
-        <a href="{% url 'home' %}" class="flex items-center mb-8">
-            <i data-lucide="music-2" class="w-6 h-6 text-white mr-2"></i>
-            <span class="text-xl font-semibold text-white">Savaitės Hit'as</span>
-        </a>
-
-        {# Navigacija ir Vartotojo blokas #}
-        <div class="flex flex-col justify-between flex-1 mt-6">
-            <nav class="-mx-3 space-y-6 ">
-                {# Navigacijos sekcija #}
-                <div class="space-y-3 ">
-                    <label class="px-3 text-xs text-indigo-200 uppercase dark:text-indigo-300">Navigacija</label>
-                    <a class="flex items-center px-3 py-2 text-indigo-100 ... {% if request.resolver_match.url_name == 'home' %} ... {% endif %}" href="{% url 'home' %}">
-                        <i data-lucide="home" class="w-5 h-5"></i>
-                        <span class="mx-2 text-sm font-medium">Pagrindinis</span>
-                    </a>
-                    
-                    {% if user.is_authenticated %}
-                    <a class="flex items-center px-3 py-2 text-indigo-100 ... {% if request.resolver_match.url_name == 'my_groups' %} ... {% endif %}" href="{% url 'my_groups' %}">
-                        <i data-lucide="users" class="w-5 h-5"></i>
-                        <span class="mx-2 text-sm font-medium">Mano grupės</span>
-                    </a>
-                    {% endif %}
-
+    {# VIRŠUTINĖ NAVIGACIJA #}
+    <header class="sticky top-0 z-40 glass-panel border-b border-gray-800/80 px-4 lg:px-8 py-3 transition-all">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            {# Logo #}
+            <a href="{% url 'home' %}" class="flex items-center gap-3 cursor-pointer">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-pink flex items-center justify-center shadow-lg shadow-brand-500/30">
+                    <i class="fa-solid fa-compact-disc text-xl text-white animate-spin-slow"></i>
                 </div>
-                {# Kita sekcija #}
-                <div class="space-y-3 ">
-                    <label class="px-3 text-xs text-indigo-200 uppercase dark:text-indigo-300">Paskyra</label> {# Pakeista etiketė #}
-                   {# <<< Pakeista Nustatymų nuoroda į Profilio redagavimą >>> #}
-                   <a class="flex items-center px-3 py-2 text-indigo-100 transition-colors duration-300 transform rounded-lg dark:text-indigo-200 hover:bg-indigo-600 dark:hover:bg-indigo-800 hover:text-white dark:hover:text-gray-100 {% if request.resolver_match.url_name == 'profile_edit' %} bg-indigo-600 dark:bg-indigo-800 text-white {% endif %}" href="{% url 'profile_edit' %}">
-                       <i data-lucide="user-cog" class="w-5 h-5"></i> {# Pakeista ikona #}
-                       <span class="mx-2 text-sm font-medium">Redaguoti Paskyrą</span> {# Pakeistas tekstas #}
-                   </a>
-                    <a class="flex items-center px-3 py-2 text-indigo-100 ... " href="#"> {# Pakeiskite '#' į realius URL #}
-                       <i data-lucide="info" class="w-5 h-5"></i>
-                       <span class="mx-2 text-sm font-medium">Apie</span>
-                   </a>
-               </div>
-            </nav> {# Navigacijos pabaiga #}
+                <div>
+                    <h1 class="font-extrabold text-lg lg:text-xl tracking-tight bg-gradient-to-r from-white via-gray-200 to-brand-500 bg-clip-text text-transparent">
+                        Savaitės<span class="text-brand-500">Hitas</span>
+                    </h1>
+                    <p class="text-[10px] text-gray-400 font-medium tracking-wider uppercase">Muzikos Konkursų Platforma</p>
+                </div>
+            </a>
 
-            {# <<< VARTOTOJO BLOKAS APAČIOJE (TIK PRISIJUNGUSIAM) >>> #}
-            <div class="mt-6 pt-4 border-t border-indigo-600 dark:border-indigo-700">
+            {# Navigacija #}
+            {% if user.is_authenticated %}
+            <nav class="hidden lg:flex items-center gap-1 bg-gray-900/80 p-1.5 rounded-full border border-gray-800">
+                <a href="{% url 'home' %}" class="nav-link px-4 py-2 rounded-full text-xs font-medium text-gray-400 hover:text-white transition {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                    <i class="fa-solid fa-house mr-1.5"></i>Pradžia
+                </a>                <a href="{% url 'my_groups' %}" class="nav-link px-4 py-2 rounded-full text-xs font-medium text-gray-400 hover:text-white transition {% if request.resolver_match.url_name == 'my_groups' %}active{% endif %}">
+                    <i class="fa-solid fa-users mr-1.5"></i>Mano Grupės
+                </a>
+                <a href="{% url 'my_songs' %}" class="nav-link px-4 py-2 rounded-full text-xs font-medium text-gray-400 hover:text-white transition {% if request.resolver_match.url_name == 'my_songs' %}active{% endif %}">
+                    <i class="fa-solid fa-compact-disc mr-1.5"></i>Mano Dainos
+                </a>
+                {% if user.is_superuser %}
+                <a href="{% url 'all_groups_list' %}" class="nav-link px-4 py-2 rounded-full text-xs font-medium text-gray-400 hover:text-white transition {% if request.resolver_match.url_name == 'all_groups_list' %}active{% endif %}">
+                    <i class="fa-solid fa-compass mr-1.5"></i>Visos Grupės
+                </a>
+                {% endif %}
+                <a href="{% url 'profile_edit' %}" class="nav-link px-4 py-2 rounded-full text-xs font-medium text-gray-400 hover:text-white transition {% if request.resolver_match.url_name == 'profile_edit' %}active{% endif %}">
+                    <i class="fa-regular fa-user mr-1.5"></i>Profilis
+                </a>
+            </nav>
+            {% endif %}            {# Vartotojo blokas #}
+            <div class="flex items-center gap-3">
+                {# Temos perjungiklis #}
+                <button type="button" onclick="toggleTheme()" title="Perjungti temą" class="w-9 h-9 rounded-full bg-gray-900 border border-gray-800 hover:border-gray-700 text-gray-300 flex items-center justify-center transition flex-shrink-0">
+                    <i id="theme-icon" class="fa-solid fa-moon text-sm"></i>
+                </button>
                 {% if user.is_authenticated %}
-                    {# Tik prisijungusiam vartotojui #}
-                    <div class="flex items-center px-3 py-2 mb-2">
-                        <i data-lucide="user-circle-2" class="w-6 h-6 text-indigo-200 mr-2 flex-shrink-0"></i>
-                        {# <<< PRADŽIA: Pakeista eilutė vardui rodyti >>> #}
-                        <span class="text-sm font-medium text-white truncate" title="{{ user.get_full_name|default:user.username }}">
-                            Sveiki, {{ user.get_full_name|default:user.username }}
-                        </span>
-                        {# <<< PABAIGA: Pakeista eilutė >>> #}
+                    <div class="relative group">
+                        <button class="flex items-center gap-2 p-1.5 pr-3 rounded-full bg-gray-900 border border-gray-800 hover:border-gray-700 transition">
+                            <span class="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-600 to-brand-pink flex items-center justify-center text-white text-xs font-bold ring-2 ring-brand-500/50">
+                                {{ user.get_full_name|default:user.username|slice:":1"|upper }}
+                            </span>
+                            <span class="text-xs font-semibold text-gray-200 hidden sm:inline">{{ user.get_full_name|default:user.username }}</span>
+                            <i class="fa-solid fa-chevron-down text-[10px] text-gray-400"></i>
+                        </button>
+                        <div class="absolute right-0 mt-2 w-52 glass-panel rounded-2xl py-2 shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 border border-gray-800 z-50">
+                            <div class="px-4 py-2 border-b border-gray-800">
+                                <p class="text-xs font-bold text-white truncate">{{ user.get_full_name|default:user.username }}</p>
+                                <p class="text-[10px] text-gray-400 truncate">{{ user.email }}</p>
+                            </div>                            <a href="{% url 'profile_edit' %}" class="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-300 hover:bg-brand-500/10 hover:text-white">
+                                <i class="fa-regular fa-user text-brand-500"></i> Profilis ir Nustatymai
+                            </a>
+                            <a href="{% url 'my_songs' %}" class="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-300 hover:bg-brand-500/10 hover:text-white">
+                                <i class="fa-solid fa-compact-disc text-brand-neon"></i> Mano Dainų Istorija
+                            </a>
+                            <a href="{% url 'my_groups' %}" class="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-300 hover:bg-brand-500/10 hover:text-white">
+                                <i class="fa-solid fa-users text-brand-pink"></i> Mano Grupės
+                            </a>
+                            <div class="my-1 border-t border-gray-800"></div>
+                            <a href="{% url 'logout' %}" class="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-red-400 hover:bg-red-500/10">
+                                <i class="fa-solid fa-right-from-bracket"></i> Atsijungti
+                            </a>
+                        </div>
                     </div>
-                     <a href="{% url 'logout' %}" class="flex items-center px-3 py-2 text-indigo-100 transition-colors duration-300 transform rounded-lg dark:text-indigo-200 hover:bg-indigo-600 dark:hover:bg-indigo-800 hover:text-white dark:hover:text-gray-100">
-                        <i data-lucide="log-out" class="w-5 h-5"></i>
-                        <span class="mx-2 text-sm font-medium">Atsijungti</span>
+                {% else %}
+                    <a href="{% url 'login' %}" class="px-4 py-2 rounded-xl bg-gray-900 border border-gray-800 hover:border-gray-700 text-white font-semibold text-xs transition flex items-center gap-2">
+                        <i class="fa-solid fa-right-to-bracket text-brand-500"></i><span>Prisijungti</span>
+                    </a>
+                    <a href="{% url 'signup' %}" class="px-4 py-2 rounded-xl bg-gradient-to-r from-brand-500 to-brand-neon hover:brightness-110 text-white font-semibold text-xs transition shadow-lg shadow-brand-500/25 flex items-center gap-2">
+                        <i class="fa-solid fa-user-plus"></i><span>Registruotis</span>
                     </a>
                 {% endif %}
             </div>
-            {# <<< Vartotojo bloko pabaiga >>> #}
+        </div>
 
-        </div> {# Flex-1 div pabaiga #}
-    </aside> {# Šoninės juostos pabaiga #}
+        {# Mobili navigacija #}
+        {% if user.is_authenticated %}
+        <div class="flex lg:hidden overflow-x-auto gap-2 pt-3 pb-1 border-t border-gray-800/40 mt-2">
+            <a href="{% url 'home' %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'home' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Pradžia</a>
+            <a href="{% url 'my_groups' %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'my_groups' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Mano Grupės</a>
+            <a href="{% url 'my_songs' %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'my_songs' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Mano Dainos</a>
+            {% if user.is_superuser %}
+            <a href="{% url 'all_groups_list' %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'all_groups_list' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Visos Grupės</a>
+            {% endif %}
+            <a href="{% url 'profile_edit' %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'profile_edit' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Profilis</a>
+        </div>
+        {% endif %}
+    </header>
 
     {# PAGRINDINIS TURINYS #}
-    <main class="flex-1 p-6 overflow-y-auto">
+    <main class="max-w-7xl mx-auto px-4 lg:px-8 py-8 w-full flex-grow animate-fadeIn">
         {% block content %}
-            {# Numatytasis turinys, jei blokas 'content' neperrašytas #}
-            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Sveiki atvykę!</h1>
-            <p class="mt-2 text-gray-600 dark:text-gray-300">Čia bus rodomas pagrindinis puslapio turinys.</p>
+            <h1 class="text-2xl font-bold text-white">Sveiki atvykę!</h1>
+            <p class="mt-2 text-gray-400">Čia bus rodomas pagrindinis puslapio turinys.</p>
         {% endblock %}
-    </main> {# Pagrindinio turinio pabaiga #}
+    </main>
 
-    {# <<< PRIDĖTAS BLOKAS PAPILDOMIEMS SKRIPTAMS >>> #}
-    {% block scripts %}
-        {# Čia bus įterptas JavaScript kodas iš praplėčiančių šablonų, pvz., home.html #}
-    {% endblock scripts %}
-    {# <<< BLOKO PABAIGA >>> #}
+    {# FOOTER #}
+    <footer class="border-t border-gray-800/80 px-4 lg:px-8 py-6 mt-8">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-compact-disc text-brand-500"></i>
+                <span>© 2026 Savaitės Hitas. Visos teisės saugomos.</span>
+            </div>
+        </div>
+    </footer>
 
-    {# <<< LUCIDE IKONŲ INICIALIZAVIMAS PERKELTAS PO SCRIPTS BLOKO >>> #}
+    {% block scripts %}{% endblock scripts %}    {# Lucide ikonų inicializavimas #}
     <script>
       try {
         if (typeof lucide !== 'undefined') {
           lucide.createIcons();
-          // console.log("Lucide icons initialized from base.html"); // Debug pranešimas
-        } else {
-          console.error("Lucide library not fully loaded before attempting icon initialization in base.html.");
         }
       } catch (error) {
         console.error("Error initializing Lucide icons in base.html:", error);
       }
     </script>
-    {# <<< INICIALIZAVIMO PABAIGA >>> #}
+
+    {# Temos perjungimas #}
+    <script>
+      function updateThemeIcon() {
+          var icon = document.getElementById('theme-icon');
+          if (!icon) return;
+          if (document.documentElement.classList.contains('dark')) {
+              icon.className = 'fa-solid fa-moon text-sm';
+          } else {
+              icon.className = 'fa-solid fa-sun text-sm text-amber-500';
+          }
+      }
+      function toggleTheme() {
+          var isDark = document.documentElement.classList.toggle('dark');
+          try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
+          updateThemeIcon();
+      }
+      updateThemeIcon();
+    </script>
 
 </body>
 </html>

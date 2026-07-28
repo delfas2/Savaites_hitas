@@ -1,28 +1,94 @@
 {# muzika_app/templates/muzika_app/auth_base.html #}
 <!DOCTYPE html>
-<html lang="lt">
+<html lang="lt" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Muzikos Projektas{% endblock %}</title>
+    <title>{% block title %}Savaitės Hitas{% endblock %}</title>
     {# Tailwind CSS iš CDN #}
     <script src="https://cdn.tailwindcss.com"></script>
-    {# Galima pridėti kitų bendrų stilių ar JS, reikalingų TIK auth puslapiams #}
+    {# Google Fonts & Font Awesome #}
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#f0f3ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5',
+                            700: '#4338ca', accent: '#10b981', neon: '#8b5cf6', pink: '#ec4899',
+                            gold: '#f59e0b', darkBg: '#0b0f19', cardBg: '#131b2e'
+                        }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'spin-slow': 'spin 6s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-6px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        /* Pavyzdžiui, specifinis fonas auth puslapiams */
         body {
-            /* Pakeiskite į norimą foną */
-             /* background-color: #f0f2f5; */
-             font-family: sans-serif;
+            background-color: #0b0f19;
+            color: #f3f4f6;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(19, 27, 46, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glow-effect { position: relative; }
+        .glow-effect::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: linear-gradient(45deg, #6366f1, #ec4899, #8b5cf6, #10b981);
+            border-radius: inherit;
+            z-index: -1;
+            filter: blur(20px);
+            opacity: 0.35;
         }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-screen">
-    {# Pagrindinis turinio blokas, kurį užpildys login.html ir signup.html #}
-    <main class="w-full max-w-md mx-auto p-4">
-         {% block content %}
-            {# Čia bus įterptas prisijungimo arba registracijos formos turinys #}
-         {% endblock %}
-    </main>
+<body class="min-h-screen flex items-center justify-center p-4 selection:bg-brand-500 selection:text-white relative">
+
+    {# Dekoratyvūs fono blizgesiai #}
+    <div class="fixed -right-40 -top-40 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="fixed -left-40 -bottom-40 w-96 h-96 bg-brand-pink/20 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="w-full max-w-md mx-auto relative z-10">
+        {# Logo #}
+        <a href="{% url 'home' %}" class="flex items-center justify-center gap-3 mb-8">
+            <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-pink flex items-center justify-center shadow-lg shadow-brand-500/30">
+                <i class="fa-solid fa-compact-disc text-xl text-white animate-spin-slow"></i>
+            </div>
+            <div>
+                <h1 class="font-extrabold text-xl tracking-tight bg-gradient-to-r from-white via-gray-200 to-brand-500 bg-clip-text text-transparent">
+                    Savaitės<span class="text-brand-500">Hitas</span>
+                </h1>
+                <p class="text-[10px] text-gray-400 font-medium tracking-wider uppercase">Muzikos Konkursų Platforma</p>
+            </div>
+        </a>
+
+        <main class="glass-panel rounded-3xl p-6 lg:p-8 shadow-2xl glow-effect">
+            {% block content %}
+                {# Prisijungimo arba registracijos forma #}
+            {% endblock %}
+        </main>
+    </div>
+
 </body>
 </html>

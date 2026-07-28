@@ -4,23 +4,17 @@
 {% block title %}Mano grupės{% endblock %}
 
 {% block content %}
-<h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">Mano grupės</h1>
-
-{# Grupės veiksmų blokas (Kurti/Prisijungti) #}
-<div class="mb-6 p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
-    <h2 class="text-xl font-semibold text-gray-700 dark:text-white mb-3">Grupės Veiksmai</h2>
-    <p class="text-gray-600 dark:text-gray-300 mb-4">
-        Sukurkite naują grupę arba prisijunkite prie jau esančios naudodami kodą.
-    </p>
-    {# Mygtukai #}
-    <div class="flex flex-wrap gap-4">
-        {# Nuoroda į grupės kūrimo puslapį #}
-        <a href="{% url 'create_group_page' %}" class="inline-block px-5 py-2 bg-emerald-600 text-white font-medium rounded-md shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-700 transition duration-150 ease-in-out">
-            <i data-lucide="plus" class="inline-block w-4 h-4 mr-1 -ml-1"></i> Kurti grupę
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+    <div>
+        <h1 class="text-2xl lg:text-3xl font-black text-white">Mano Muzikinės Grupės</h1>
+        <p class="text-xs text-gray-400 mt-1">Klubai ir bendruomenės, kuriose aktyviai dalyvaujate</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+        <a href="{% url 'create_group_page' %}" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs transition shadow-lg flex items-center gap-1.5">
+            <i class="fa-solid fa-plus"></i> Kurti Grupę
         </a>
-        {# Mygtukas modaliniam langui atidaryti #}
-        <button type="button" id="join-group-button" class="px-5 py-2 bg-sky-600 text-white font-medium rounded-md shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-gray-700 transition duration-150 ease-in-out">
-             <i data-lucide="log-in" class="inline-block w-4 h-4 mr-1 -ml-1"></i> Prisijungti prie grupės
+        <button type="button" id="join-group-button" class="px-4 py-2 rounded-xl glass-card border border-gray-700 text-white font-bold text-xs transition hover:bg-gray-800/80 flex items-center gap-1.5">
+            <i class="fa-solid fa-right-to-bracket text-brand-500"></i> Prisijungti prie Grupės
         </button>
     </div>
 </div>
@@ -28,8 +22,8 @@
 {# Nuoroda supervartotojui į visų grupių sąrašą #}
 {% if user.is_superuser %}
 <div class="mb-6 text-sm">
-    <a href="{% url 'all_groups_list' %}" class="text-purple-600 dark:text-purple-400 hover:underline font-medium inline-flex items-center">
-        <i data-lucide="list" class="w-4 h-4 mr-1"></i> Rodyti visas sistemos grupes (Superuser)
+    <a href="{% url 'all_groups_list' %}" class="text-brand-neon hover:text-brand-500 hover:underline font-medium inline-flex items-center gap-1.5">
+        <i class="fa-solid fa-list"></i> Rodyti visas sistemos grupes (Superuser)
     </a>
 </div>
 {% endif %}
@@ -37,9 +31,9 @@
 
 {# Rodyti pranešimus (pvz., po bandymo prisijungti) #}
 {% if messages %}
-    <div class="mb-6">
+    <div class="mb-6 space-y-2">
         {% for message in messages %}
-            <div class="p-3 rounded-md {% if message.tags == 'success' %} bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 {% elif message.tags == 'error' %} bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 {% elif message.tags == 'info' %} bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 {% else %} bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-200 {% endif %}" role="alert">
+            <div class="p-3 rounded-xl text-xs font-medium border {% if message.tags == 'success' %} bg-emerald-500/10 text-emerald-300 border-emerald-500/30 {% elif message.tags == 'error' %} bg-red-500/10 text-red-300 border-red-500/30 {% elif message.tags == 'info' %} bg-brand-500/10 text-brand-100 border-brand-500/30 {% else %} bg-amber-500/10 text-amber-300 border-amber-500/30 {% endif %}" role="alert">
                 {{ message }}
             </div>
         {% endfor %}
@@ -47,81 +41,83 @@
 {% endif %}
 
 
-{# Vartotojo grupių sąrašas #}
-<div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-    {% if memberships %}
-        <ul class="divide-y divide-gray-200 dark:divide-gray-600">
-            {% for membership in memberships %}
-                 <li class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-150 ease-in-out">
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1 min-w-0">
-                            <a href="{% url 'group_admin' group_code=membership.group.code %}" class="text-lg font-semibold text-indigo-600 dark:text-indigo-400 hover:underline truncate">
-                                {{ membership.group.name }}
-                            </a>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                Jūsų rolė:
-                                <span class="font-medium {% if membership.role == 'ADMIN' %}text-emerald-600 dark:text-emerald-400{% else %}text-gray-700 dark:text-gray-200{% endif %}">
-                                    {{ membership.get_role_display }}
-                                </span>
-                                <span class="ml-2 text-xs font-mono text-gray-400 dark:text-gray-500">({{ membership.group.code }})</span>
-                            </p>
+{# Vartotojo grupių sąrašas – kortelių tinklelis #}
+{% if memberships %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for membership in memberships %}
+            <div class="glass-card rounded-3xl p-5 border border-gray-800 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-pink flex items-center justify-center text-white font-bold uppercase">
+                            {{ membership.group.name|slice:":2" }}
                         </div>
-                        <div class="ml-4 flex-shrink-0">
-                             <a href="{% url 'group_admin' group_code=membership.group.code %}" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
-                                Valdyti
-                                <i data-lucide="arrow-right" class="ml-1 h-4 w-4"></i>
-                            </a>
-                        </div>
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold {% if membership.role == 'ADMIN' %}bg-amber-500/20 text-amber-300{% else %}bg-gray-800 text-gray-300{% endif %}">
+                            {{ membership.get_role_display }}
+                        </span>
                     </div>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <div class="p-6 text-center">
-            <i data-lucide="users" class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-4"></i>
-            <p class="text-lg font-medium text-gray-700 dark:text-gray-200">Jūs kol kas nepriklausote jokioms grupėms.</p>
-            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                Pradėkite kurdami naują grupę arba prisijunkite prie esamos.
-            </p>
+                    <h3 class="font-bold text-base text-white mb-1 truncate">{{ membership.group.name }}</h3>
+                    <p class="text-[11px] font-mono text-gray-500 mb-3">Kodas: {{ membership.group.code }}</p>
+                    {% if membership.group.information %}
+                        <p class="text-xs text-gray-400 mb-4 line-clamp-2">{{ membership.group.information }}</p>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-2 pt-3 border-t border-gray-800">
+                    <a href="{% url 'group_games_list' group_code=membership.group.code %}" class="flex-1 py-2 rounded-xl bg-brand-600 text-white text-xs font-bold hover:bg-brand-500 transition text-center">
+                        Žaidimai
+                    </a>
+                    <a href="{% url 'group_admin' group_code=membership.group.code %}" class="p-2 px-3 rounded-xl bg-gray-800 text-gray-300 text-xs hover:bg-gray-700 transition" title="Valdyti grupę">
+                        <i class="fa-solid fa-gear"></i>
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="glass-card rounded-3xl p-10 text-center border border-gray-800">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-brand-500/10 flex items-center justify-center mb-4">
+            <i class="fa-solid fa-users text-2xl text-brand-500"></i>
         </div>
-    {% endif %}
-</div>
+        <p class="text-lg font-bold text-white">Jūs kol kas nepriklausote jokioms grupėms.</p>
+        <p class="mt-2 text-sm text-gray-400">Pradėkite kurdami naują grupę arba prisijunkite prie esamos.</p>
+    </div>
+{% endif %}
 
 
 {# Modalinis langas prisijungimui prie grupės #}
 <div id="join-group-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+    <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center">
         {# Fonas (užtemdymas) #}
-        <div id="join-group-modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-        {# Centravimo elementas #}
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div id="join-group-modal-backdrop" class="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity" aria-hidden="true"></div>
         {# Modalinis turinys #}
-        <div class="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-gray-800 shadow-xl rounded-lg">
-            <div class="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-600">
-                <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white" id="modal-title">
-                    Prisijungti prie Grupės
-                </h3>
-                <button type="button" id="join-group-modal-close-button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
-                    <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                    <span class="sr-only">Uždaryti langą</span>
+        <div class="relative inline-block w-full max-w-md p-6 lg:p-8 text-left align-middle transition-all transform glass-panel border border-gray-800 shadow-2xl rounded-3xl">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-bold text-white" id="modal-title">Prisijungti prie Grupės</h3>
+                    <p class="text-[11px] text-gray-400">Įveskite grupės prisijungimo kodą</p>
+                </div>
+                <button type="button" id="join-group-modal-close-button" class="text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
             {# Forma kodui įvesti #}
-            <form action="{% url 'join_group' %}" method="POST" class="mt-4 space-y-4">
+            <form action="{% url 'join_group' %}" method="POST" class="mt-2 space-y-4">
                 {% csrf_token %}
                 <div>
-                    <label for="group_code_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Grupės kodas:</label>
+                    <label for="group_code_input" class="block text-[11px] font-semibold text-gray-300 mb-1">Grupės kodas:</label>
                     <input type="text" name="group_code" id="group_code_input" required maxlength="7"
-                           class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 dark:text-gray-100 uppercase placeholder-gray-400"
                            placeholder="Įveskite 7 simbolių kodą"
+                           class="uppercase tracking-widest font-mono"
                            oninput="this.value = this.value.toUpperCase()">
-                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Kodą sudaro 7 didžiosios raidės ir skaičiai.</p>
+                     <p class="mt-1 text-xs text-gray-500">Kodą sudaro 7 didžiosios raidės ir skaičiai.</p>
                 </div>
-                <div class="pt-4 flex justify-end gap-3">
-                     <button type="button" id="join-group-modal-cancel-button" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-100 font-medium rounded-md shadow-sm hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition duration-150 ease-in-out">
+                <div class="pt-2 flex justify-end gap-2">
+                     <button type="button" id="join-group-modal-cancel-button" class="px-4 py-2 rounded-xl bg-gray-800 text-gray-300 text-xs font-bold hover:bg-gray-700 transition">
                         Atšaukti
                     </button>
-                     <button type="submit" class="px-4 py-2 bg-sky-600 text-white font-medium rounded-md shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition duration-150 ease-in-out">
+                     <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-lg transition">
                         Prisijungti
                     </button>
                 </div>

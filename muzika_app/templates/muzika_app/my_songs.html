@@ -1,0 +1,209 @@
+{# muzika_app/templates/muzika_app/my_songs.html #}
+{% extends 'muzika_app/base.html' %}
+
+{% block title %}Mano Dainos{% endblock %}
+
+{% block content %}
+{# --- ANTRAŠTĖ --- #}
+<div class="glass-panel p-6 rounded-3xl border border-gray-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+    <div>
+        <span class="px-3 py-1 rounded-full bg-brand-neon/20 text-brand-neon text-[10px] font-bold border border-brand-neon/30 uppercase tracking-wider">
+            ASMENINĖ STATISTIKA
+        </span>
+        <h2 class="text-2xl font-black text-white mt-2">Mano Įkeltų Dainų Istorija</h2>
+        <p class="text-xs text-gray-400">Peržiūrėkite visus savo pasiūlytus kūrinius, gautus taškus ir užimtas vietas konkursuose</p>
+    </div>
+</div>
+
+{# --- SANTRAUKOS KORTELĖS --- #}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="glass-card p-5 rounded-2xl border border-gray-800 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-brand-500/20 text-brand-500 flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-music"></i>
+        </div>
+        <div>
+            <span class="block text-[11px] text-gray-400 font-medium">Viso Pasiūlyta</span>
+            <span class="text-xl font-black text-white">{{ total_songs }} dain{{ total_songs|pluralize:"a,os,ų" }}</span>
+        </div>
+    </div>
+
+    <div class="glass-card p-5 rounded-2xl border border-gray-800 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-star"></i>
+        </div>
+        <div>
+            <span class="block text-[11px] text-gray-400 font-medium">Surinkta Taškų</span>
+            <span class="text-xl font-black text-amber-400">{{ total_points }} tšk.</span>
+        </div>
+    </div>
+
+    <div class="glass-card p-5 rounded-2xl border border-gray-800 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-chart-line"></i>
+        </div>
+        <div>
+            <span class="block text-[11px] text-gray-400 font-medium">Vidurkis per Konkursą</span>
+            <span class="text-xl font-black text-emerald-400">{{ avg_points }} tšk.</span>
+        </div>
+    </div>
+
+    <div class="glass-card p-5 rounded-2xl border border-gray-800 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-brand-pink/20 text-brand-pink flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-trophy"></i>
+        </div>
+        <div>
+            <span class="block text-[11px] text-gray-400 font-medium">Laimėti Konkursai</span>
+            <span class="text-xl font-black text-brand-pink">{{ wins_count }} pergal{{ wins_count|pluralize:"ė,ės,ių" }}</span>
+        </div>
+    </div>
+</div>
+
+{# --- DAINŲ LENTELĖ SU FILTRAIS --- #}
+<div class="glass-card rounded-3xl p-6 border border-gray-800 space-y-4">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-800 pb-4">
+        <h3 class="text-lg font-bold text-white">Įkeltų Kūrinių Sąrašas</h3>
+
+        {# Statuso filtras #}
+        <div class="flex items-center gap-2 bg-gray-900 p-1 rounded-xl border border-gray-800 text-xs">
+            <button onclick="filterMySongs('all')" id="filter-btn-all" class="my-song-filter-btn px-3 py-1.5 rounded-lg font-semibold bg-brand-600 text-white">Visi</button>
+            <button onclick="filterMySongs('voting')" id="filter-btn-voting" class="my-song-filter-btn px-3 py-1.5 rounded-lg font-semibold text-gray-400 hover:text-white">Vykstantys</button>
+            <button onclick="filterMySongs('ended')" id="filter-btn-ended" class="my-song-filter-btn px-3 py-1.5 rounded-lg font-semibold text-gray-400 hover:text-white">Baigti</button>
+            <button onclick="filterMySongs('winners')" id="filter-btn-winners" class="my-song-filter-btn px-3 py-1.5 rounded-lg font-semibold text-gray-400 hover:text-white">Laimėtojai 🏆</button>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        {% if songs_data %}
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="text-[11px] font-bold text-gray-400 uppercase border-b border-gray-800">
+                    <th class="pb-3 pl-2">Kūrinys</th>
+                    <th class="pb-3">Konkursas / Grupė</th>
+                    <th class="pb-3">Pateikimo Data</th>
+                    <th class="pb-3">Statusas</th>
+                    <th class="pb-3 text-center">Vieta</th>
+                    <th class="pb-3 text-right pr-2">Surinkti Taškai</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800/60 text-xs" id="my-songs-history-table">
+                {% for item in songs_data %}
+                <tr class="my-song-row hover:bg-brand-500/5 transition group"
+                    data-status="{{ item.status }}"
+                    data-winner="{% if item.is_winner %}1{% else %}0{% endif %}">
+                    <td class="py-3.5 pl-2">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-pink flex items-center justify-center text-white flex-shrink-0">
+                                <i class="fa-solid fa-music text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="font-bold text-white flex items-center gap-2">
+                                    <span>{{ item.song.title }}</span>
+                                    {% if item.is_winner %}
+                                    <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[9px] font-extrabold border border-amber-500/30">🏆 1 VIETA</span>
+                                    {% endif %}
+                                </div>
+                                <a href="{{ item.song.youtube_url }}" target="_blank" class="text-[11px] text-gray-400 hover:text-red-400 inline-flex items-center gap-1">
+                                    <i class="fa-brands fa-youtube"></i> YouTube
+                                </a>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3.5">
+                        <div class="font-semibold text-gray-200">{{ item.game.name }}</div>
+                        <a href="{% url 'group_admin' group_code=item.group.code %}" class="text-[10px] text-brand-500 font-medium hover:underline">{{ item.group.name }}</a>
+                    </td>
+                    <td class="py-3.5 font-mono text-gray-400 text-[11px]">
+                        {{ item.song.submitted_at|date:"Y-m-d" }}
+                    </td>
+                    <td class="py-3.5">
+                        {% if item.status == 'voting' %}
+                            <span class="px-2.5 py-1 rounded-full bg-brand-pink/20 text-brand-pink text-[10px] font-bold border border-brand-pink/30 flex items-center gap-1 w-max">
+                                <i class="fa-solid fa-spinner animate-spin text-[9px]"></i> Balsuojama
+                            </span>
+                        {% elif item.status == 'submission' %}
+                            <span class="px-2.5 py-1 rounded-full bg-teal-500/20 text-teal-300 text-[10px] font-bold border border-teal-500/30 w-max block">
+                                Kėlimas
+                            </span>
+                        {% else %}
+                            <span class="px-2.5 py-1 rounded-full bg-gray-800 text-gray-300 text-[10px] font-semibold w-max block">
+                                Baigtas
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="py-3.5 text-center font-mono font-bold">
+                        {% if item.status != 'ended' or not item.rank %}
+                            <span class="text-gray-500">–</span>
+                        {% elif item.rank == 1 %}
+                            <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 text-xs font-bold">#1</span>
+                        {% elif item.rank == 2 %}
+                            <span class="px-2 py-0.5 rounded-md bg-gray-700 text-gray-200 text-xs font-bold">#2</span>
+                        {% elif item.rank == 3 %}
+                            <span class="px-2 py-0.5 rounded-md bg-amber-900/40 text-amber-600 text-xs font-bold">#3</span>
+                        {% else %}
+                            <span class="text-gray-400 text-xs">#{{ item.rank }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-3.5 text-right pr-2">
+                        <div class="font-mono font-black text-sm {% if item.is_winner %}text-amber-400{% else %}text-brand-accent{% endif %}">
+                            {{ item.points }} tšk.
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div id="no-songs-filter-msg" class="hidden py-8 text-center text-gray-400">
+            Pagal pasirinktą filtrą dainų nebuvo rasta.
+        </div>
+        {% else %}
+        <div class="py-12 text-center">
+            <i class="fa-solid fa-compact-disc text-4xl text-gray-700 mb-3"></i>
+            <p class="text-sm text-gray-400">Jūs dar nesate įkėlę nė vienos dainos.</p>
+            <a href="{% url 'my_groups' %}" class="inline-flex items-center gap-1.5 mt-4 text-brand-500 hover:text-brand-100 text-sm">
+                <i class="fa-solid fa-users"></i> Eiti į mano grupes
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    let currentSongFilter = 'all';
+
+    function filterMySongs(filterType) {
+        currentSongFilter = filterType;
+
+        // Paryškinam aktyvų mygtuką
+        document.querySelectorAll('.my-song-filter-btn').forEach(btn => {
+            btn.classList.remove('bg-brand-600', 'text-white');
+            btn.classList.add('text-gray-400');
+        });
+        const activeBtn = document.getElementById('filter-btn-' + filterType);
+        if (activeBtn) {
+            activeBtn.classList.remove('text-gray-400');
+            activeBtn.classList.add('bg-brand-600', 'text-white');
+        }
+
+        // Filtruojam eilutes
+        const rows = document.querySelectorAll('.my-song-row');
+        let visibleCount = 0;
+        rows.forEach(row => {
+            const status = row.dataset.status;
+            const isWinner = row.dataset.winner === '1';
+            let show = false;
+            if (filterType === 'all') show = true;
+            else if (filterType === 'voting') show = (status === 'voting');
+            else if (filterType === 'ended') show = (status === 'ended');
+            else if (filterType === 'winners') show = isWinner;
+
+            row.style.display = show ? '' : 'none';
+            if (show) visibleCount++;
+        });
+
+        const emptyMsg = document.getElementById('no-songs-filter-msg');
+        if (emptyMsg) {
+            emptyMsg.classList.toggle('hidden', visibleCount !== 0);
+        }
+    }
+</script>
+{% endblock %}
