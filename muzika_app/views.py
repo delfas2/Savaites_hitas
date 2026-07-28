@@ -13,6 +13,7 @@ from django.http import HttpResponseForbidden, JsonResponse
 from django.db import IntegrityError, transaction, models
 from django.db.models import Sum, Count, Q, F
 from django.core.exceptions import ValidationError
+from django.utils.http import url_has_allowed_host_and_scheme
 import re
 from collections import defaultdict
 from datetime import timedelta
@@ -657,7 +658,13 @@ def add_song_view(request, group_code, game_id):
                 try:
                      song.save()
                      messages.success(request, f'Daina "{song.title}" sėkmingai įkelta!')
-                     return redirect('group_games_list', group_code=group.code)
+                     # Grįžtame į tą patį puslapį, iš kurio buvo pateikta forma
+                     next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
+                     if next_url and url_has_allowed_host_and_scheme(
+                         next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+                     ):
+                         return redirect(next_url)
+                     return redirect('group_admin', group_code=group.code)
                 except IntegrityError:
                      messages.error(request, 'Klaida. Galbūt bandote įkelti dainą su YouTube nuoroda, kurią jau esate įkėlę anksčiau šiame žaidime?')
                 except Exception as e:
@@ -697,7 +704,13 @@ def edit_song_view(request, group_code, game_id, song_id):
             try:
                 form.save()
                 messages.success(request, f'Daina "{song.title}" sėkmingai atnaujinta!')
-                return redirect('group_games_list', group_code=group.code)
+                # Grįžtame į tą patį puslapį, iš kurio buvo pateikta forma
+                next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
+                if next_url and url_has_allowed_host_and_scheme(
+                    next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+                ):
+                    return redirect(next_url)
+                return redirect('group_admin', group_code=group.code)
             except IntegrityError:
                  messages.error(request, 'Įvyko netikėta klaida. Galbūt kita jūsų daina jau naudoja šią YouTube nuorodą?')
             except Exception as e:

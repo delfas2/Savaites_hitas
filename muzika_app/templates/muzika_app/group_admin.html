@@ -291,10 +291,9 @@
                 <h3 class="text-lg font-bold text-white">{% if user_song %}Redaguoti Dainą{% else %}Siūlyti Dainą Konkursui{% endif %}</h3>
                 <p class="text-[11px] text-gray-400">Žaidimas: {{ active_game.name }}</p>
             </div>
-        </div>
-
-        <form action="{% if user_song %}{% url 'edit_song' group_code=group.code game_id=active_game.id song_id=user_song.id %}{% else %}{% url 'add_song' group_code=group.code game_id=active_game.id %}{% endif %}" method="POST" class="space-y-3">
+        </div>        <form action="{% if user_song %}{% url 'edit_song' group_code=group.code game_id=active_game.id song_id=user_song.id %}{% else %}{% url 'add_song' group_code=group.code game_id=active_game.id %}{% endif %}" method="POST" class="space-y-3">
             {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
             <div>
                 <label for="{{ song_form.title.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ song_form.title.label }}</label>
                 {{ song_form.title }}

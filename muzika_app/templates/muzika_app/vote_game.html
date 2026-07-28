@@ -111,7 +111,7 @@
                             <button type="button" onclick="setPoints('{{ song.id }}', 1)" data-pts="1" class="pts-btn w-10 h-10 rounded-xl font-black text-sm border border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-600 hover:text-white transition-all">1</button>
                             <button type="button" onclick="setPoints('{{ song.id }}', 0)" data-pts="0" title="Atšaukti tašką" class="w-10 h-10 rounded-xl font-medium text-sm border border-gray-800 bg-gray-900 text-gray-500 hover:text-rose-400 transition-all"><i class="fa-solid fa-xmark"></i></button>
                         </div>
-                        <span id="status-{{ song.id }}" class="text-[11px] font-bold text-gray-500 mt-3">Netaškyta</span>
+                        <span id="status-{{ song.id }}" class="text-[11px] font-bold text-gray-500 mt-3">Taškų neskirta</span>
                     </div>
                 </div>
             </div>
@@ -240,7 +240,7 @@
             } else {
                 card.classList.add('border-gray-800');
                 statusSpan.className = "text-[11px] font-bold text-gray-500 mt-3";
-                statusSpan.innerText = "Netaškyta";
+                statusSpan.innerText = "Taškų neskirta";
             }
         });        // 3. Paslėpti laukai
         const inv = {}; // points -> songId
