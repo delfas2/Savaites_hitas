@@ -1,6 +1,7 @@
 {# muzika_app/templates/muzika_app/vote_game.html #}
 {% extends 'muzika_app/base.html' %}
 {% load embed_video_tags %}
+{% load muzika_tags %}
 
 {% block title %}Balsavimas: {{ game.name }}{% endblock %}
 
@@ -87,9 +88,21 @@
                  data-search="{{ song.title }} {{ song.submitted_by.get_full_name|default:song.submitted_by.username }}">
                 <div class="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-6">
                     {# Video + info #}
-                    <div class="flex-1 flex flex-col md:flex-row gap-5 items-start md:items-center">
-                        <div class="w-full md:w-[420px] aspect-video rounded-xl overflow-hidden bg-black/40 border border-gray-800 shrink-0 shadow-xl">
-                            {% video song.youtube_url %}
+                    <div class="flex-1 flex flex-col md:flex-row gap-5 items-start md:items-center">                        <div class="w-full md:w-[420px] aspect-video rounded-xl overflow-hidden bg-black/40 border border-gray-800 shrink-0 shadow-xl">
+                            {% with vid=song.youtube_url|youtube_id %}
+                                {% if vid %}
+                                    <iframe class="w-full h-full"
+                                            src="https://www.youtube-nocookie.com/embed/{{ vid }}?rel=0&modestbranding=1"
+                                            title="{{ song.title }}"
+                                            frameborder="0"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                            referrerpolicy="strict-origin-when-cross-origin"
+                                            allowfullscreen
+                                            loading="lazy"></iframe>
+                                {% else %}
+                                    {% video song.youtube_url %}
+                                {% endif %}
+                            {% endwith %}
                         </div>
                         <div class="flex-1">
                             <span class="text-xs font-bold text-amber-400 uppercase tracking-wider">{{ forloop.counter|stringformat:"02d" }} Kūrinys</span>
