@@ -25,7 +25,11 @@ SECRET_KEY = "django-insecure-n29bhs9&bb^*xm8+v!@!^svz#c_!h4#r&jbsv-#zrl%rpy1m*#
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'delfas2.pythonanywhere.com',
+    'localhost',
+    '127.0.0.1',
+]
 
 
 LOGIN_REDIRECT_URL = '/'
