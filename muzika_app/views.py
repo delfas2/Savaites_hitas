@@ -18,7 +18,7 @@ import re
 from collections import defaultdict
 from datetime import timedelta
 
-from .models import Group, generate_unique_code, Membership, Game, Song, Vote
+from .models import Group, generate_unique_code, Membership, Game, Song, Vote, Playlist, PlaylistItem
 from .templatetags.muzika_tags import youtube_id
 from .forms import (
     GroupForm, SignUpForm, GameForm, SongForm,
@@ -366,14 +366,105 @@ def all_songs_view(request):
             'group_name': game.group.name,
             'songs': song_list,
             'song_count': len(song_list),
+        })    # Vartotojo asmeniniai grojaraščiai su dainomis
+    my_playlists = []
+    for pl in Playlist.objects.filter(owner=request.user).prefetch_related('items__song__game__group'):
+        songs = []
+        for item in pl.items.all():
+            song = item.song
+            vid = youtube_id(song.youtube_url)
+            songs.append({
+                'id': song.id,
+                'item_id': item.id,
+                'title': song.title,
+                'youtube_url': song.youtube_url,
+                'video_id': vid,
+                'group_name': song.game.group.name if song.game and song.game.group else '',
+            })
+        my_playlists.append({
+            'id': pl.id,
+            'name': pl.name,
+            'songs': songs,
+            'song_count': len(songs),
         })
 
     context = {
         'playlists': playlists,
         'total_songs': total_songs,
         'total_playlists': len(playlists),
+        'my_playlists': my_playlists,
     }
     return render(request, 'muzika_app/all_songs.html', context)
+
+
+# --- ASMENINIAI GROJARAŠČIAI (API) ---
+
+@login_required
+@require_POST
+def create_playlist_view(request):
+    """ Sukuria naują asmeninį grojaraštį. """
+    name = (request.POST.get('name') or '').strip()
+    if not name:
+        return JsonResponse({'ok': False, 'error': 'Įveskite pavadinimą.'}, status=400)
+    if len(name) > 120:
+        name = name[:120]
+    playlist, created = Playlist.objects.get_or_create(owner=request.user, name=name)
+    if not created:
+        return JsonResponse({'ok': False, 'error': 'Toks grojaraštis jau yra.'}, status=400)
+    return JsonResponse({
+        'ok': True,
+        'playlist': {'id': playlist.id, 'name': playlist.name, 'song_count': 0}
+    })
+
+
+@login_required
+@require_POST
+def delete_playlist_view(request, playlist_id):
+    """ Ištrina asmeninį grojaraštį. """
+    playlist = get_object_or_404(Playlist, id=playlist_id, owner=request.user)
+    playlist.delete()
+    return JsonResponse({'ok': True})
+
+
+@login_required
+@require_POST
+def add_song_to_playlist_view(request, playlist_id, song_id):
+    """ Prideda dainą į asmeninį grojaraštį. """
+    playlist = get_object_or_404(Playlist, id=playlist_id, owner=request.user)
+    song = get_object_or_404(Song, id=song_id)
+    item, created = PlaylistItem.objects.get_or_create(playlist=playlist, song=song)
+    return JsonResponse({
+        'ok': True,
+        'created': created,
+        'song': {
+            'id': song.id,
+            'item_id': item.id,
+            'title': song.title,
+            'youtube_url': song.youtube_url,
+            'video_id': youtube_id(song.youtube_url),
+            'group_name': song.game.group.name if song.game and song.game.group else '',
+        },
+        'song_count': playlist.items.count(),
+    })
+
+
+@login_required
+@require_POST
+def remove_song_from_playlist_view(request, playlist_id, song_id):
+    """ Pašalina dainą iš asmeninio grojaraščio. """
+    playlist = get_object_or_404(Playlist, id=playlist_id, owner=request.user)
+    PlaylistItem.objects.filter(playlist=playlist, song_id=song_id).delete()
+    return JsonResponse({'ok': True, 'song_count': playlist.items.count()})
+
+
+@login_required
+def my_playlists_json_view(request):
+    """ Grąžina vartotojo grojaraščius (naudojama balsavimo puslapyje). """
+    data = []
+    for pl in Playlist.objects.filter(owner=request.user).prefetch_related('items'):
+        song_ids = list(pl.items.values_list('song_id', flat=True))
+        data.append({'id': pl.id, 'name': pl.name, 'song_ids': song_ids})
+    return JsonResponse({'ok': True, 'playlists': data})
 
 
 # --- ŽAIDIMŲ VALDYMAS ---

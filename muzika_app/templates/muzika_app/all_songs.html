@@ -26,15 +26,28 @@
     </div>
 </div>
 
-{% if playlists %}
+{% if playlists or my_playlists %}
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-    {# --- KAIRĖ: GROJARAŠČIŲ SĄRAŠAS --- #}
+    {# --- KAIRĖ: GROJARAŠČIŲ SĄRAŠAS + TABAI --- #}
     <div class="lg:col-span-1 space-y-4">
-        <div class="glass-card p-4 rounded-2xl border border-gray-800">
+        {# Tabų perjungikliai #}
+        <div class="glass-card p-1.5 rounded-2xl border border-gray-800 flex gap-1.5">
+            <button type="button" id="tab-btn-games" onclick="switchTab('games')"
+                    class="flex-1 py-2 rounded-xl text-xs font-bold transition bg-gradient-to-r from-brand-pink to-brand-neon text-white">
+                <i class="fa-solid fa-trophy mr-1"></i> Žaidimai
+            </button>
+            <button type="button" id="tab-btn-mine" onclick="switchTab('mine')"
+                    class="flex-1 py-2 rounded-xl text-xs font-bold transition text-gray-300 hover:text-white">
+                <i class="fa-solid fa-heart mr-1"></i> Mano grojaraščiai
+            </button>
+        </div>
+
+        {# ---- TABAS: ŽAIDIMŲ GROJARAŠČIAI ---- #}
+        <div id="tab-games" class="glass-card p-4 rounded-2xl border border-gray-800">
             <div class="flex items-center justify-between mb-3">
                 <h3 class="text-sm font-black text-white flex items-center gap-2">
-                    <i class="fa-solid fa-list-ul text-brand-pink"></i> Grojaraščiai
+                    <i class="fa-solid fa-list-ul text-brand-pink"></i> Žaidimų grojaraščiai
                 </h3>
                 <div class="flex gap-1.5">
                     <button type="button" onclick="selectAllPlaylists(true)" class="text-[10px] font-semibold px-2 py-1 rounded-lg bg-brand-500/15 text-brand-500 hover:bg-brand-500/25 transition">Visus</button>
@@ -42,6 +55,7 @@
                 </div>
             </div>
 
+            {% if playlists %}
             <div class="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
                 {% for pl in playlists %}
                 <label class="playlist-item flex items-center gap-3 p-3 rounded-xl bg-gray-900/60 border border-gray-800 hover:border-brand-pink/40 cursor-pointer transition">
@@ -60,9 +74,35 @@
             <button type="button" onclick="buildQueue()" class="mt-4 w-full py-2.5 rounded-xl bg-gradient-to-r from-brand-pink to-brand-neon hover:brightness-110 text-white font-bold text-xs transition shadow-lg shadow-brand-pink/25 flex items-center justify-center gap-2">
                 <i class="fa-solid fa-play"></i> Groti pasirinktus
             </button>
+            {% else %}
+            <p class="text-xs text-gray-500 text-center py-6">Kol kas nėra žaidimų grojaraščių.</p>
+            {% endif %}
         </div>
-    </div>    {# --- DEŠINĖ: GROTUVAS + EILĖ --- #}
-    <div class="lg:col-span-2 space-y-4">        {# Muzikos grotuvas (tik garsas – vaizdas paslėptas) #}
+
+        {# ---- TABAS: MANO GROJARAŠČIAI ---- #}
+        <div id="tab-mine" class="glass-card p-4 rounded-2xl border border-gray-800 hidden">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-black text-white flex items-center gap-2">
+                    <i class="fa-solid fa-heart text-brand-pink"></i> Mano grojaraščiai
+                </h3>
+            </div>
+
+            {# Naujo grojaraščio kūrimas #}
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="new-playlist-name" maxlength="120" placeholder="Naujo grojaraščio pavadinimas"
+                       class="flex-1 text-xs rounded-xl bg-gray-900/60 border border-gray-700 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-brand-pink">
+                <button type="button" onclick="createPlaylist()" class="shrink-0 px-3 py-2 rounded-xl bg-brand-pink/20 text-brand-pink hover:bg-brand-pink/30 text-xs font-bold transition">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>            <div id="my-playlists-list" class="space-y-2 max-h-[55vh] overflow-y-auto pr-1">
+                {# Užpildoma per JS #}
+            </div>
+        </div>
+    </div>
+
+    {# --- DEŠINĖ: GROTUVAS + EILĖ --- #}
+    <div class="lg:col-span-2 space-y-4">
+        {# Muzikos grotuvas (tik garsas – vaizdas paslėptas) #}
         <div class="glass-card p-5 rounded-2xl border border-gray-800">
             {# Paslėptas YouTube grotuvas: realaus dydžio, iškeltas už ekrano ribų (kad YouTube neribotų buferio) #}
             <div id="player-wrap" style="position:fixed; bottom:0; left:-2000px; width:640px; height:360px; z-index:-1;">
@@ -136,6 +176,7 @@
 
 {# --- VISŲ DAINŲ DUOMENYS (JSON) --- #}
 {{ playlists|json_script:"playlists-data" }}
+{{ my_playlists|json_script:"my-playlists-data" }}
 
 {% else %}
 {# --- TUŠČIA BŪSENA --- #}
@@ -148,12 +189,30 @@
 {% endblock %}
 
 {% block scripts %}
-{% if playlists %}
+{% if playlists or my_playlists %}
 <script>
     // ============ Duomenys ============
     const PLAYLISTS = JSON.parse(document.getElementById('playlists-data').textContent);
     const PLAYLIST_MAP = {};
-    PLAYLISTS.forEach(pl => { PLAYLIST_MAP[pl.game_id] = pl; });    let queue = [];          // masyvas dainų objektų {id, title, video_id, playlist_name}
+    PLAYLISTS.forEach(pl => { PLAYLIST_MAP[pl.game_id] = pl; });
+
+    let MY_PLAYLISTS = JSON.parse(document.getElementById('my-playlists-data').textContent);
+
+    // CSRF pagalbinė (Django POST užklausoms)
+    function getCookie(name) {
+        const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return v ? v.pop() : '';
+    }
+    const CSRF = getCookie('csrftoken');
+
+    const URLS = {
+        create: "{% url 'create_playlist' %}",
+        del: (pid) => `/grojarasciai/${pid}/trinti/`,
+        add: (pid, sid) => `/grojarasciai/${pid}/prideti/${sid}/`,
+        remove: (pid, sid) => `/grojarasciai/${pid}/pasalinti/${sid}/`,
+    };
+
+    let queue = [];          // masyvas dainų objektų {id, title, video_id, playlist_name}
     let currentIndex = -1;
     let shuffle = false;
     let ytPlayer = null;
@@ -259,9 +318,12 @@
                 if (!ytPlayer || typeof ytPlayer.getDuration !== 'function') return;
                 const rect = bar.getBoundingClientRect();
                 const pct = (ev.clientX - rect.left) / rect.width;
-                const dur = ytPlayer.getDuration() || 0;
-                ytPlayer.seekTo(dur * pct, true);
+                const dur = ytPlayer.getDuration() || 0;                ytPlayer.seekTo(dur * pct, true);
             });
+        }
+        // Atvaizduojam vartotojo grojaraščius
+        if (typeof renderMyPlaylists === 'function') {
+            renderMyPlaylists();
         }
     });
 
@@ -334,10 +396,134 @@
                     playlist_name: pl.name,
                 });
             });
+        });        if (shuffle) shuffleArray(queue);
+
+        renderQueue();
+        currentIndex = -1;
+        playAt(0);
+    }
+
+    // ============ TABAI ============
+    function switchTab(tab) {
+        const isGames = tab === 'games';
+        document.getElementById('tab-games').classList.toggle('hidden', !isGames);
+        document.getElementById('tab-mine').classList.toggle('hidden', isGames);
+
+        const activeCls = ['bg-gradient-to-r', 'from-brand-pink', 'to-brand-neon', 'text-white'];
+        const btnGames = document.getElementById('tab-btn-games');
+        const btnMine = document.getElementById('tab-btn-mine');
+        activeCls.forEach(c => {
+            btnGames.classList.toggle(c, isGames);
+            btnMine.classList.toggle(c, !isGames);
         });
+        btnGames.classList.toggle('text-gray-300', !isGames);
+        btnMine.classList.toggle('text-gray-300', isGames);
+    }
 
+    // ============ MANO GROJARAŠČIAI ============
+    function renderMyPlaylists() {
+        const container = document.getElementById('my-playlists-list');
+        if (!container) return;
+        if (!MY_PLAYLISTS.length) {
+            container.innerHTML = '<p class="text-xs text-gray-500 text-center py-6">Dar neturite grojaraščių. Sukurkite naują aukščiau.</p>';
+            return;
+        }
+        container.innerHTML = MY_PLAYLISTS.map(pl => `
+            <div class="rounded-xl bg-gray-900/60 border border-gray-800 overflow-hidden">
+                <div class="flex items-center gap-2 p-3">
+                    <div class="min-w-0 flex-1">
+                        <span class="block text-xs font-bold text-white truncate">${escapeHtml(pl.name)}</span>
+                        <span class="block text-[10px] text-gray-400">${pl.song_count} dain${pluralLt(pl.song_count)}</span>
+                    </div>
+                    <button type="button" onclick="playMyPlaylist(${pl.id})" title="Groti" class="shrink-0 w-8 h-8 rounded-full bg-brand-pink/20 text-brand-pink hover:bg-brand-pink/30 transition flex items-center justify-center">
+                        <i class="fa-solid fa-play text-xs"></i>
+                    </button>
+                    <button type="button" onclick="toggleMyPlaylistSongs(${pl.id})" title="Peržiūrėti" class="shrink-0 w-8 h-8 rounded-full bg-gray-800 text-gray-300 hover:text-white transition flex items-center justify-center">
+                        <i class="fa-solid fa-chevron-down text-xs" id="chev-${pl.id}"></i>
+                    </button>
+                    <button type="button" onclick="deletePlaylist(${pl.id})" title="Ištrinti" class="shrink-0 w-8 h-8 rounded-full bg-gray-800 text-red-400 hover:bg-red-500/15 transition flex items-center justify-center">
+                        <i class="fa-solid fa-trash text-xs"></i>
+                    </button>
+                </div>
+                <div id="pl-songs-${pl.id}" class="hidden px-3 pb-3 space-y-1">
+                    ${pl.songs.length ? pl.songs.map(s => `
+                        <div class="flex items-center gap-2 text-[11px] text-gray-300 bg-gray-800/50 rounded-lg px-2 py-1.5">
+                            <span class="min-w-0 flex-1 truncate">${escapeHtml(s.title)}</span>
+                            <button type="button" onclick="removeFromPlaylist(${pl.id}, ${s.id})" title="Pašalinti" class="shrink-0 text-red-400 hover:text-red-300">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    `).join('') : '<p class="text-[10px] text-gray-500 py-2">Grojaraštis tuščias</p>'}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function pluralLt(n) {
+        const lastTwo = n % 100, last = n % 10;
+        if (last === 0 || (lastTwo >= 11 && lastTwo <= 19)) return 'ų';
+        if (last === 1) return 'a';
+        return 'os';
+    }
+
+    function toggleMyPlaylistSongs(pid) {
+        const el = document.getElementById('pl-songs-' + pid);
+        const chev = document.getElementById('chev-' + pid);
+        if (!el) return;
+        const hidden = el.classList.toggle('hidden');
+        if (chev) chev.className = 'fa-solid text-xs ' + (hidden ? 'fa-chevron-down' : 'fa-chevron-up');
+    }
+
+    function createPlaylist() {
+        const input = document.getElementById('new-playlist-name');
+        const name = (input.value || '').trim();
+        if (!name) { input.focus(); return; }
+        fetch(URLS.create, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'name=' + encodeURIComponent(name)
+        }).then(r => r.json()).then(data => {
+            if (!data.ok) { alert(data.error || 'Klaida.'); return; }
+            MY_PLAYLISTS.push({ id: data.playlist.id, name: data.playlist.name, songs: [], song_count: 0 });
+            input.value = '';
+            renderMyPlaylists();
+        });
+    }
+
+    function deletePlaylist(pid) {
+        if (!confirm('Ar tikrai ištrinti šį grojaraštį?')) return;
+        fetch(URLS.del(pid), {
+            method: 'POST', headers: { 'X-CSRFToken': CSRF }
+        }).then(r => r.json()).then(data => {
+            if (!data.ok) return;
+            MY_PLAYLISTS = MY_PLAYLISTS.filter(p => p.id !== pid);
+            renderMyPlaylists();
+        });
+    }
+
+    function removeFromPlaylist(pid, sid) {
+        fetch(URLS.remove(pid, sid), {
+            method: 'POST', headers: { 'X-CSRFToken': CSRF }
+        }).then(r => r.json()).then(data => {
+            if (!data.ok) return;
+            const pl = MY_PLAYLISTS.find(p => p.id === pid);
+            if (pl) {
+                pl.songs = pl.songs.filter(s => s.id !== sid);
+                pl.song_count = data.song_count;
+            }
+            renderMyPlaylists();
+        });
+    }    function playMyPlaylist(pid) {
+        const pl = MY_PLAYLISTS.find(p => p.id === pid);
+        if (!pl || !pl.songs.length) { alert('Grojaraštis tuščias.'); return; }
+        queue = pl.songs.map(s => ({
+            id: s.id,
+            title: s.title,
+            video_id: s.video_id,
+            youtube_url: s.youtube_url,
+            playlist_name: pl.name,
+        }));
         if (shuffle) shuffleArray(queue);
-
         renderQueue();
         currentIndex = -1;
         playAt(0);

@@ -31,6 +31,10 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
 ]
 
+# Django 4.x reikalauja nurodyti patikimas kilmes (origins) POST/CSRF užklausoms per HTTPS.
+# Be šito visos formos (pvz., žaidimo redagavimas) produkcijoje grąžina 403 ir neišsisaugo.
+CSRF_TRUSTED_ORIGINS = ['https://delfas2.pythonanywhere.com']
+
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'

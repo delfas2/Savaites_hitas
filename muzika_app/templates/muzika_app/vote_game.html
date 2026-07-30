@@ -105,9 +105,16 @@
                             {% endwith %}
                         </div>                        <div class="flex-1">
                             <h3 class="text-lg font-black text-white mt-1 mb-3">{{ song.title }}</h3>
-                            <a href="{{ song.youtube_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-gray-300 hover:text-amber-400 transition inline-flex items-center gap-1.5 bg-gray-800/80 px-3 py-1.5 rounded-lg border border-gray-700/60">
-                                <i class="fa-brands fa-youtube text-rose-500 text-sm"></i> Atidaryti „YouTube“
-                            </a>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <a href="{{ song.youtube_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-gray-300 hover:text-amber-400 transition inline-flex items-center gap-1.5 bg-gray-800/80 px-3 py-1.5 rounded-lg border border-gray-700/60">
+                                    <i class="fa-brands fa-youtube text-rose-500 text-sm"></i> Atidaryti „YouTube“
+                                </a>
+                                <button type="button"
+                                        onclick="openPlaylistPicker('{{ song.id }}', this)"
+                                        class="text-xs text-gray-300 hover:text-brand-pink transition inline-flex items-center gap-1.5 bg-gray-800/80 px-3 py-1.5 rounded-lg border border-gray-700/60">
+                                    <i class="fa-solid fa-plus text-brand-pink text-sm"></i> Pridėti į mano grojaraštį
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -160,9 +167,39 @@
         <p class="mt-2 text-sm text-gray-400">{{ reason_not_active|default:"Balsavimas šiam žaidimui dar neprasidėjo arba jau pasibaigė." }}</p>
         <a href="{% url 'group_admin' group_code=group.code %}" class="inline-flex items-center gap-1.5 mt-6 text-brand-500 hover:text-brand-100 text-sm">
             <i class="fa-solid fa-arrow-left"></i> Grįžti į grupės puslapį
-        </a>
-    </div>
+        </a>    </div>
 {% endif %}
+
+{# --- MODALAS: Pridėti dainą į grojaraštį --- #}
+<div id="playlist-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div class="glass-panel w-full max-w-md rounded-2xl border border-gray-700 shadow-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-black text-white flex items-center gap-2">
+                <i class="fa-solid fa-list-music text-brand-pink"></i> Pridėti į grojaraštį
+            </h3>
+            <button type="button" onclick="closePlaylistPicker()" class="text-gray-400 hover:text-white transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+        <p id="pm-song-title" class="text-xs text-gray-400 mb-4 truncate"></p>
+
+        <div id="pm-list" class="space-y-2 max-h-60 overflow-y-auto mb-4">
+            {# užpildoma JS #}
+        </div>
+
+        <div class="border-t border-gray-800 pt-4">
+            <label class="block text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2">Naujas grojaraštis</label>
+            <div class="flex gap-2">
+                <input type="text" id="pm-new-name" placeholder="Pavadinimas..." maxlength="120"
+                       class="flex-1 bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-brand-500">
+                <button type="button" onclick="createPlaylistAndAdd()"
+                        class="px-4 py-2 rounded-xl bg-brand-pink hover:opacity-90 text-white text-xs font-bold transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus"></i> Sukurti
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -310,11 +347,183 @@
         if (form) {            form.addEventListener('submit', function(e) {
                 const requiredCount = Math.min(5, document.querySelectorAll('.song-card').length);
                 if (Object.keys(selectedPoints).length !== requiredCount) {
-                    e.preventDefault();
-                    alert(`Turite priskirti visus ${requiredCount} taškus skirtingoms dainoms.`);
+                    e.preventDefault();                    alert(`Turite priskirti visus ${requiredCount} taškus skirtingoms dainoms.`);
                 }
             });
         }
+    });
+
+    // ============ GROJARAŠČIAI ============
+    const PL_CSRF = '{{ csrf_token }}';
+    const PL_URLS = {
+        list: "{% url 'my_playlists_json' %}",
+        create: "{% url 'create_playlist' %}",
+        add: "{% url 'add_song_to_playlist' 0 0 %}",  // 0/0 – pakeisim JS'e
+    };
+    let PL_PLAYLISTS = [];      // [{id, name, song_ids:[]}]
+    let PL_CURRENT_SONG = null; // dabar pridedamos dainos ID
+    let PL_LOADED = false;    function addUrl(playlistId, songId) {
+        return "/grojarasciai/" + playlistId + "/prideti/" + songId + "/";
+    }
+
+    function removeUrl(playlistId, songId) {
+        return "/grojarasciai/" + playlistId + "/pasalinti/" + songId + "/";
+    }
+
+    async function loadMyPlaylists() {
+        try {
+            const resp = await fetch(PL_URLS.list, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const data = await resp.json();
+            if (data.ok) {
+                PL_PLAYLISTS = data.playlists;
+                PL_LOADED = true;
+            }
+        } catch (e) {
+            console.error('Nepavyko įkelti grojaraščių', e);
+        }
+    }
+
+    async function openPlaylistPicker(songId, btn) {
+        PL_CURRENT_SONG = String(songId);
+        const modal = document.getElementById('playlist-modal');
+        const titleEl = document.getElementById('pm-song-title');
+        // Dainos pavadinimas iš kortelės
+        const card = document.getElementById('card-' + songId);
+        titleEl.innerText = card ? (card.dataset.search || '') : '';
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        if (!PL_LOADED) {
+            document.getElementById('pm-list').innerHTML = '<p class="text-xs text-gray-500 py-4 text-center">Kraunama...</p>';
+            await loadMyPlaylists();
+        }
+        renderPlaylistPicker();
+    }
+
+    function closePlaylistPicker() {
+        const modal = document.getElementById('playlist-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.getElementById('pm-new-name').value = '';
+    }
+
+    function renderPlaylistPicker() {
+        const list = document.getElementById('pm-list');
+        if (!PL_PLAYLISTS.length) {
+            list.innerHTML = '<p class="text-xs text-gray-500 py-4 text-center">Dar neturite grojaraščių. Sukurkite naują žemiau.</p>';
+            return;
+        }        list.innerHTML = PL_PLAYLISTS.map(pl => {
+            const has = pl.song_ids.map(String).includes(PL_CURRENT_SONG);
+            const actionBtn = has
+                ? `<button type="button" onclick="removeSongFromPlaylist(${pl.id}, this)"
+                        class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-red-500/15 text-red-300 border border-red-500/30 hover:bg-red-500/25 transition">
+                        <i class="fa-solid fa-trash"></i> Ištrinti
+                   </button>`
+                : `<button type="button" onclick="addSongToPlaylist(${pl.id}, this)"
+                        class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-brand-pink/20 text-brand-pink border border-brand-pink/30 hover:bg-brand-pink/30 transition">
+                        <i class="fa-solid fa-plus"></i> Pridėti
+                   </button>`;
+            return `
+                <div class="w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl border transition ${has ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-gray-800/80 border-gray-700'}">
+                    <span class="text-xs font-bold truncate flex items-center gap-2 min-w-0 ${has ? 'text-emerald-300' : 'text-gray-200'}">
+                        <i class="fa-solid fa-list-music text-brand-pink shrink-0"></i>
+                        <span class="truncate">${escapeHtml(pl.name)}</span>
+                        <span class="text-[10px] font-semibold text-gray-400 shrink-0">(${pl.song_ids.length} d.)</span>
+                    </span>
+                    ${actionBtn}
+                </div>`;
+        }).join('');
+    }
+
+    async function addSongToPlaylist(playlistId, btn) {
+        if (btn) { btn.disabled = true; }
+        try {
+            const resp = await fetch(addUrl(playlistId, PL_CURRENT_SONG), {
+                method: 'POST',
+                headers: { 'X-CSRFToken': PL_CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            const data = await resp.json();
+            if (data.ok) {
+                const pl = PL_PLAYLISTS.find(p => p.id === playlistId);
+                if (pl && !pl.song_ids.map(String).includes(PL_CURRENT_SONG)) {
+                    pl.song_ids.push(parseInt(PL_CURRENT_SONG));
+                }
+                renderPlaylistPicker();
+                showToast(data.created ? 'Daina pridėta į grojaraštį!' : 'Daina jau buvo grojaraštyje.');
+            } else {
+                alert(data.error || 'Klaida.');
+                if (btn) btn.disabled = false;
+            }        } catch (e) {
+            alert('Nepavyko pridėti dainos.');
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    async function removeSongFromPlaylist(playlistId, btn) {
+        if (btn) { btn.disabled = true; }
+        try {
+            const resp = await fetch(removeUrl(playlistId, PL_CURRENT_SONG), {
+                method: 'POST',
+                headers: { 'X-CSRFToken': PL_CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            const data = await resp.json();
+            if (data.ok) {
+                const pl = PL_PLAYLISTS.find(p => p.id === playlistId);
+                if (pl) {
+                    pl.song_ids = pl.song_ids.filter(id => String(id) !== PL_CURRENT_SONG);
+                }
+                renderPlaylistPicker();
+                showToast('Daina pašalinta iš grojaraščio.');
+            } else {
+                alert(data.error || 'Klaida.');
+                if (btn) btn.disabled = false;
+            }
+        } catch (e) {
+            alert('Nepavyko pašalinti dainos.');
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    async function createPlaylistAndAdd() {
+        const input = document.getElementById('pm-new-name');
+        const name = (input.value || '').trim();
+        if (!name) { input.focus(); return; }
+        try {
+            const fd = new FormData();
+            fd.append('name', name);
+            const resp = await fetch(PL_URLS.create, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': PL_CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+                body: fd,
+            });
+            const data = await resp.json();
+            if (data.ok) {
+                PL_PLAYLISTS.push({ id: data.playlist.id, name: data.playlist.name, song_ids: [] });
+                input.value = '';
+                // iškart pridedam dainą į naują grojaraštį
+                await addSongToPlaylist(data.playlist.id, null);
+            } else {
+                alert(data.error || 'Klaida.');
+            }
+        } catch (e) {
+            alert('Nepavyko sukurti grojaraščio.');
+        }
+    }
+
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // Uždaryti modalą paspaudus foną arba ESC
+    document.addEventListener('click', function (e) {
+        const modal = document.getElementById('playlist-modal');
+        if (modal && e.target === modal) closePlaylistPicker();
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closePlaylistPicker();
     });
 </script>
 {% endblock %}

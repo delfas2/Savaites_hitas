@@ -249,10 +249,59 @@ class Vote(models.Model):
         super().clean()
         # Tikrinam, ar nebalsuojama už savo dainą
         if self.song.submitted_by == self.voter:
-            raise ValidationError("Negalima balsuoti už savo įkeltą dainą.")
-        # Tikrinam, ar daina priklauso tam pačiam žaidimui, už kurį balsuojama
+            raise ValidationError("Negalima balsuoti už savo įkeltą dainą.")        # Tikrinam, ar daina priklauso tam pačiam žaidimui, už kurį balsuojama
         if self.song.game != self.game:
              raise ValidationError("Ši daina nepriklauso žaidimui, už kurį balsuojate.")
+
+
+class Playlist(models.Model):
+    """ Asmeninis vartotojo grojaraštis, į kurį jis gali kaupti dainas. """
+    owner = models.ForeignKey(
+        AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='playlists',
+        verbose_name="Savininkas"
+    )
+    name = models.CharField(
+        max_length=120,
+        verbose_name="Grojaraščio pavadinimas"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = "Grojaraštis"
+        verbose_name_plural = "Grojaraščiai"
+        unique_together = ('owner', 'name')
+
+    def __str__(self):
+        return f"{self.name} ({self.owner.username})"
+
+
+class PlaylistItem(models.Model):
+    """ Daina, priskirta asmeniniam grojaraščiui. """
+    playlist = models.ForeignKey(
+        Playlist,
+        on_delete=models.CASCADE,
+        related_name='items',
+        verbose_name="Grojaraštis"
+    )
+    song = models.ForeignKey(
+        Song,
+        on_delete=models.CASCADE,
+        related_name='playlist_items',
+        verbose_name="Daina"
+    )
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['added_at']
+        verbose_name = "Grojaraščio daina"
+        verbose_name_plural = "Grojaraščio dainos"
+        unique_together = ('playlist', 'song')
+
+    def __str__(self):
+        return f"{self.song.title} -> {self.playlist.name}"
 
 
 
