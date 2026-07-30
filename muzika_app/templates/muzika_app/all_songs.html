@@ -147,14 +147,14 @@
         ytReady = true;
     };    function createPlayer(videoId) {
         const wrap = document.getElementById('yt-player');
-        wrap.innerHTML = '';
-        ytPlayer = new YT.Player('yt-player', {
-            host: 'https://www.youtube-nocookie.com',
+        wrap.innerHTML = '';        ytPlayer = new YT.Player('yt-player', {
+            host: 'https://www.youtube.com',
             videoId: videoId,
             playerVars: {
                 autoplay: 1,
                 rel: 0,
                 modestbranding: 1,
+                playsinline: 1,
                 origin: window.location.origin
             },
             events: {
