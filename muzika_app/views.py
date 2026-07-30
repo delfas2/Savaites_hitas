@@ -332,7 +332,9 @@ def all_songs_view(request):
     if request.user.is_superuser:
         games_qs = Game.objects.all()
     else:
-        user_group_ids = Group.objects.filter(members=request.user).values_list('id', flat=True)
+        user_group_ids = Membership.objects.filter(
+            user=request.user
+        ).values_list('group_id', flat=True)
         games_qs = Game.objects.filter(group_id__in=user_group_ids)
 
     games = (
