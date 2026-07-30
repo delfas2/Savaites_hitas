@@ -35,19 +35,54 @@
 
 {# --- HERO BANERIS: DABAR VYKSTANTIS ŽAIDIMAS / PASKUTINIO NUGALĖTOJAS --- #}
 {% if active_game %}
-    <div class="relative overflow-hidden rounded-3xl p-6 lg:p-8 border border-gray-800 bg-gradient-to-br from-brand-cardBg via-brand-darkBg to-purple-950/40 glow-effect mb-8">
-        <div class="absolute -right-20 -top-20 w-72 h-72 bg-brand-500/20 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -left-20 -bottom-20 w-72 h-72 bg-brand-pink/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="relative overflow-hidden rounded-3xl p-6 lg:p-8 border border-gray-800 bg-gradient-to-br from-brand-cardBg via-brand-darkBg to-purple-950/40 glow-effect mb-8">        <div class="absolute -right-20 -top-20 w-72 h-72 bg-brand-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-20 -bottom-20 w-72 h-72 bg-brand-pink/20 rounded-full blur-3xl pointer-events-none"></div>        {% if active_phase == 'submission' %}
+        {# Ekvalaizerio animacija – muzikos kėlimo etapo akcentas #}
+        <div class="absolute right-6 bottom-6 opacity-30 lg:opacity-60 pointer-events-none hidden sm:block" aria-hidden="true">
+            <div class="equalizer">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+        {% elif active_phase == 'voting' %}
+        {# Balsavimo etapo akcentas – rožinis ekvalaizeris #}
+        <div class="absolute right-6 bottom-6 opacity-30 lg:opacity-60 pointer-events-none hidden sm:block" aria-hidden="true">
+            <div class="equalizer equalizer-pink">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+        {% endif %}
 
         <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div class="space-y-3">
                 {% if active_phase == 'submission' %}
                     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/20 text-teal-200 text-xs font-bold border border-teal-500/30">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> VYKSTA DAINŲ KĖLIMAS
-                    </div>
-                {% elif active_phase == 'voting' %}
+                        <span class="equalizer" style="height: 14px;">
+                            <span class="bar" style="width:3px;"></span>
+                            <span class="bar" style="width:3px;"></span>
+                            <span class="bar" style="width:3px;"></span>
+                            <span class="bar" style="width:3px;"></span>
+                        </span>
+                        VYKSTA DAINŲ KĖLIMAS
+                    </div>                {% elif active_phase == 'voting' %}
                     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-pink/20 text-brand-pink text-xs font-bold border border-brand-pink/30">
-                        <i class="fa-solid fa-fire"></i> VYKSTA BALSAVIMAS
+                        <span class="vote-pulse text-brand-pink">
+                            <i class="fa-solid fa-heart text-[10px]"></i>
+                            <i class="fa-solid fa-music text-[10px]"></i>
+                            <i class="fa-solid fa-heart text-[10px]"></i>
+                        </span>
+                        VYKSTA BALSAVIMAS
                     </div>
                 {% endif %}
                 <h2 class="text-2xl lg:text-4xl font-black text-white tracking-tight leading-tight">{{ active_game.name }}</h2>

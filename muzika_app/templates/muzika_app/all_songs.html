@@ -1,0 +1,340 @@
+{# muzika_app/templates/muzika_app/all_songs.html #}
+{% extends 'muzika_app/base.html' %}
+{% load muzika_tags %}
+
+{% block title %}Visos Dainos{% endblock %}
+
+{% block content %}
+{# --- ANTRAŠTĖ --- #}
+<div class="glass-panel p-6 rounded-3xl border border-gray-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+    <div>
+        <span class="px-3 py-1 rounded-full bg-brand-pink/20 text-brand-pink text-[10px] font-bold border border-brand-pink/30 uppercase tracking-wider">
+            MUZIKOS BIBLIOTEKA
+        </span>
+        <h2 class="text-2xl font-black text-white mt-2">Visos dainos</h2>
+        <p class="text-xs text-gray-400">Visi kada nors įkelti kūriniai, sugrupuoti pagal žaidimus kaip grojaraščiai. Pasirinkite vieną ar kelis ir klausykitės.</p>
+    </div>
+    <div class="flex items-center gap-3">
+        <div class="glass-card px-4 py-2 rounded-xl border border-gray-800 text-center">
+            <span class="block text-lg font-black text-white leading-tight">{{ total_playlists }}</span>
+            <span class="block text-[10px] text-gray-400 uppercase tracking-wider">grojarašč{{ total_playlists|pluralize_lt:"iai,iai,ių" }}</span>
+        </div>
+        <div class="glass-card px-4 py-2 rounded-xl border border-gray-800 text-center">
+            <span class="block text-lg font-black text-brand-pink leading-tight">{{ total_songs }}</span>
+            <span class="block text-[10px] text-gray-400 uppercase tracking-wider">dain{{ total_songs|pluralize_lt:"a,os,ų" }}</span>
+        </div>
+    </div>
+</div>
+
+{% if playlists %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    {# --- KAIRĖ: GROJARAŠČIŲ SĄRAŠAS --- #}
+    <div class="lg:col-span-1 space-y-4">
+        <div class="glass-card p-4 rounded-2xl border border-gray-800">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-black text-white flex items-center gap-2">
+                    <i class="fa-solid fa-list-ul text-brand-pink"></i> Grojaraščiai
+                </h3>
+                <div class="flex gap-1.5">
+                    <button type="button" onclick="selectAllPlaylists(true)" class="text-[10px] font-semibold px-2 py-1 rounded-lg bg-brand-500/15 text-brand-500 hover:bg-brand-500/25 transition">Visus</button>
+                    <button type="button" onclick="selectAllPlaylists(false)" class="text-[10px] font-semibold px-2 py-1 rounded-lg bg-gray-700/40 text-gray-300 hover:bg-gray-700/60 transition">Nė vieno</button>
+                </div>
+            </div>
+
+            <div class="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+                {% for pl in playlists %}
+                <label class="playlist-item flex items-center gap-3 p-3 rounded-xl bg-gray-900/60 border border-gray-800 hover:border-brand-pink/40 cursor-pointer transition">
+                    <input type="checkbox" class="playlist-checkbox shrink-0 w-4 h-4 accent-brand-pink" value="{{ pl.game_id }}" data-name="{{ pl.name }}">
+                    <div class="min-w-0 flex-1">
+                        <span class="block text-xs font-bold text-white truncate">{{ pl.name }}</span>
+                        <span class="block text-[10px] text-gray-400 truncate">
+                            <i class="fa-solid fa-users mr-1"></i>{{ pl.group_name }}
+                            <span class="mx-1">·</span>{{ pl.song_count }} dain{{ pl.song_count|pluralize_lt:"a,os,ų" }}
+                        </span>
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+
+            <button type="button" onclick="buildQueue()" class="mt-4 w-full py-2.5 rounded-xl bg-gradient-to-r from-brand-pink to-brand-neon hover:brightness-110 text-white font-bold text-xs transition shadow-lg shadow-brand-pink/25 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-play"></i> Groti pasirinktus
+            </button>
+        </div>
+    </div>
+
+    {# --- DEŠINĖ: GROTUVAS + EILĖ --- #}
+    <div class="lg:col-span-2 space-y-4">
+        {# Grotuvas #}
+        <div class="glass-card p-4 rounded-2xl border border-gray-800">
+            <div class="aspect-video w-full rounded-xl overflow-hidden bg-black" id="player-wrap">
+                <div id="yt-player" class="w-full h-full flex items-center justify-center text-gray-500 text-sm">
+                    <div class="text-center">
+                        <i class="fa-solid fa-headphones text-4xl mb-3 text-gray-600"></i>
+                        <p>Pasirinkite grojaraštį ir spauskite „Groti pasirinktus“</p>
+                    </div>
+                </div>
+            </div>
+
+            {# Grotuvo valdikliai #}
+            <div class="flex items-center justify-between gap-3 mt-3">
+                <div class="min-w-0 flex-1">
+                    <span id="now-playing-title" class="block text-sm font-bold text-white truncate">Niekas negroja</span>
+                    <span id="now-playing-sub" class="block text-[10px] text-gray-400 truncate"></span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" onclick="playPrev()" title="Ankstesnė" class="w-9 h-9 rounded-full bg-gray-800 border border-gray-700 text-gray-200 hover:text-white hover:border-gray-600 transition flex items-center justify-center">
+                        <i class="fa-solid fa-backward-step"></i>
+                    </button>
+                    <button type="button" onclick="playNext()" title="Kita" class="w-9 h-9 rounded-full bg-gray-800 border border-gray-700 text-gray-200 hover:text-white hover:border-gray-600 transition flex items-center justify-center">
+                        <i class="fa-solid fa-forward-step"></i>
+                    </button>
+                    <button type="button" onclick="toggleShuffle()" id="shuffle-btn" title="Maišyti" class="w-9 h-9 rounded-full bg-gray-800 border border-gray-700 text-gray-200 hover:text-white hover:border-gray-600 transition flex items-center justify-center">
+                        <i class="fa-solid fa-shuffle"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {# Eilė #}
+        <div class="glass-card p-4 rounded-2xl border border-gray-800">
+            <h3 class="text-sm font-black text-white flex items-center gap-2 mb-3">
+                <i class="fa-solid fa-bars-staggered text-brand-neon"></i> Grojaraščio eilė
+                <span id="queue-count" class="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-neon/15 text-brand-neon">0</span>
+            </h3>
+            <div id="queue-list" class="space-y-1.5 max-h-[45vh] overflow-y-auto pr-1">
+                <p class="text-xs text-gray-500 text-center py-6">Eilė tuščia</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# --- VISŲ DAINŲ DUOMENYS (JSON) --- #}
+{{ playlists|json_script:"playlists-data" }}
+
+{% else %}
+{# --- TUŠČIA BŪSENA --- #}
+<div class="glass-card p-12 rounded-3xl border border-gray-800 text-center">
+    <i class="fa-solid fa-record-vinyl text-5xl text-gray-600 mb-4"></i>
+    <h3 class="text-lg font-black text-white">Dar nėra jokių dainų</h3>
+    <p class="text-xs text-gray-400 mt-2 max-w-md mx-auto">Kai jūsų grupėse bus įkelta dainų, jos čia atsiras sugrupuotos į grojaraščius pagal žaidimus.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if playlists %}
+<script>
+    // ============ Duomenys ============
+    const PLAYLISTS = JSON.parse(document.getElementById('playlists-data').textContent);
+    const PLAYLIST_MAP = {};
+    PLAYLISTS.forEach(pl => { PLAYLIST_MAP[pl.game_id] = pl; });
+
+    let queue = [];          // masyvas dainų objektų {id, title, video_id, playlist_name}
+    let currentIndex = -1;
+    let shuffle = false;
+    let ytPlayer = null;
+    let ytReady = false;
+
+    // ============ YouTube IFrame API ============
+    (function loadYT() {
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.head.appendChild(tag);
+    })();
+
+    window.onYouTubeIframeAPIReady = function () {
+        ytReady = true;
+    };    function createPlayer(videoId) {
+        const wrap = document.getElementById('yt-player');
+        wrap.innerHTML = '';
+        ytPlayer = new YT.Player('yt-player', {
+            host: 'https://www.youtube-nocookie.com',
+            videoId: videoId,
+            playerVars: {
+                autoplay: 1,
+                rel: 0,
+                modestbranding: 1,
+                origin: window.location.origin
+            },
+            events: {
+                onStateChange: onPlayerStateChange,
+                onError: onPlayerError
+            }
+        });
+    }
+
+    function onPlayerStateChange(e) {
+        // 0 = ENDED -> groti kitą
+        if (e.data === YT.PlayerState.ENDED) {
+            playNext();
+        }
+    }
+
+    // YouTube klaidų kodai:
+    // 2 = blogas ID, 5 = HTML5 klaida, 100 = pašalinta/nerasta,
+    // 101 / 150 = savininkas uždraudė įterpimą (embedding)
+    function onPlayerError(e) {
+        const song = queue[currentIndex];
+        const title = song ? song.title : '';
+        // Pažymim eilėje kaip nepasiekiamą
+        markUnavailable(currentIndex);
+        // Automatiškai peršokam prie kitos dainos
+        if (currentIndex < queue.length - 1) {
+            setTimeout(() => playNext(), 800);
+        } else {
+            document.getElementById('now-playing-title').textContent = 'Daina nepasiekiama';
+            document.getElementById('now-playing-sub').textContent =
+                title ? ('„' + title + '" negalima groti čia') : '';
+        }
+    }
+
+    function markUnavailable(index) {
+        const row = document.querySelector('.queue-row[data-index="' + index + '"]');
+        if (!row) return;
+        row.classList.add('opacity-50');
+        const icon = row.querySelector('.queue-icon');
+        if (icon) {
+            icon.className = 'queue-icon fa-solid fa-ban text-[10px] text-red-400 shrink-0';
+        }
+    }
+
+    // ============ Grojaraščių pasirinkimas ============
+    function selectAllPlaylists(state) {
+        document.querySelectorAll('.playlist-checkbox').forEach(cb => { cb.checked = state; });
+    }
+
+    function buildQueue() {
+        const selected = Array.from(document.querySelectorAll('.playlist-checkbox:checked'))
+            .map(cb => cb.value);
+
+        if (selected.length === 0) {
+            alert('Pasirinkite bent vieną grojaraštį.');
+            return;
+        }
+
+        queue = [];
+        selected.forEach(gid => {
+            const pl = PLAYLIST_MAP[gid];
+            if (!pl) return;
+            pl.songs.forEach(s => {
+                queue.push({
+                    id: s.id,
+                    title: s.title,
+                    video_id: s.video_id,
+                    playlist_name: pl.name,
+                });
+            });
+        });
+
+        if (shuffle) shuffleArray(queue);
+
+        renderQueue();
+        currentIndex = -1;
+        playAt(0);
+    }
+
+    function shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+    }
+
+    function toggleShuffle() {
+        shuffle = !shuffle;
+        const btn = document.getElementById('shuffle-btn');
+        if (shuffle) {
+            btn.classList.add('bg-brand-pink', 'border-brand-pink', 'text-white');
+            btn.classList.remove('bg-gray-800', 'text-gray-200');
+        } else {
+            btn.classList.remove('bg-brand-pink', 'border-brand-pink', 'text-white');
+            btn.classList.add('bg-gray-800', 'text-gray-200');
+        }
+    }
+
+    // ============ Grojimas ============
+    function playAt(index) {
+        if (index < 0 || index >= queue.length) return;
+        currentIndex = index;
+        const song = queue[index];
+
+        if (ytReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+            ytPlayer.loadVideoById(song.video_id);
+        } else if (ytReady) {
+            createPlayer(song.video_id);
+        } else {
+            // API dar neįsikrovė – palaukiam
+            const wait = setInterval(() => {
+                if (ytReady) {
+                    clearInterval(wait);
+                    createPlayer(song.video_id);
+                }
+            }, 200);
+        }
+
+        document.getElementById('now-playing-title').textContent = song.title;
+        document.getElementById('now-playing-sub').textContent = song.playlist_name;
+        highlightCurrent();
+    }
+
+    function playNext() {
+        if (currentIndex < queue.length - 1) {
+            playAt(currentIndex + 1);
+        }
+    }
+
+    function playPrev() {
+        if (currentIndex > 0) {
+            playAt(currentIndex - 1);
+        }
+    }
+
+    // ============ Eilės atvaizdavimas ============
+    function renderQueue() {
+        const container = document.getElementById('queue-list');
+        document.getElementById('queue-count').textContent = queue.length;
+
+        if (queue.length === 0) {
+            container.innerHTML = '<p class="text-xs text-gray-500 text-center py-6">Eilė tuščia</p>';
+            return;
+        }
+
+        container.innerHTML = queue.map((song, i) => `
+            <div class="queue-row flex items-center gap-3 p-2.5 rounded-xl bg-gray-900/60 border border-gray-800 hover:border-brand-neon/40 cursor-pointer transition" data-index="${i}" onclick="playAt(${i})">
+                <span class="queue-num shrink-0 w-6 h-6 rounded-full bg-gray-800 text-gray-400 text-[10px] font-bold flex items-center justify-center">${i + 1}</span>
+                <div class="min-w-0 flex-1">
+                    <span class="block text-xs font-semibold text-white truncate">${escapeHtml(song.title)}</span>
+                    <span class="block text-[10px] text-gray-400 truncate">${escapeHtml(song.playlist_name)}</span>
+                </div>
+                <i class="queue-icon fa-solid fa-play text-[10px] text-gray-500 shrink-0"></i>
+            </div>
+        `).join('');
+    }
+
+    function highlightCurrent() {
+        document.querySelectorAll('.queue-row').forEach((row, i) => {
+            const num = row.querySelector('.queue-num');
+            const icon = row.querySelector('.queue-icon');
+            if (i === currentIndex) {
+                row.classList.add('border-brand-neon', 'bg-brand-neon/10');
+                num.classList.add('bg-brand-neon', 'text-white');
+                icon.classList.remove('fa-play', 'text-gray-500');
+                icon.classList.add('fa-volume-high', 'text-brand-neon');
+            } else {
+                row.classList.remove('border-brand-neon', 'bg-brand-neon/10');
+                num.classList.remove('bg-brand-neon', 'text-white');
+                icon.classList.add('fa-play', 'text-gray-500');
+                icon.classList.remove('fa-volume-high', 'text-brand-neon');
+            }
+        });
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+</script>
+{% endif %}
+{% endblock scripts %}

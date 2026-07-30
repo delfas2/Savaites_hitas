@@ -10,6 +10,7 @@ urlpatterns = [
     path("accounts/signup/", views.signup_view, name="signup"),
     path("mano-grupes/", views.my_groups_view, name="my_groups"),
     path("mano-dainos/", views.my_songs_view, name="my_songs"),
+    path("visos-dainos/", views.all_songs_view, name="all_songs"),
     path("grupe/<str:group_code>/zaidimas/kurti/", views.create_game_view, name="create_game"),
     path("grupe/<str:group_code>/zaidimas/<int:game_id>/prideti-daina/", views.add_song_view, name="add_song"),
     path("grupe/prisijungti/", views.join_group_view, name="join_group"),

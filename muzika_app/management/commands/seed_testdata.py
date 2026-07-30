@@ -10,24 +10,26 @@ from muzika_app.models import Group, Membership, Game, Song, Vote
 
 User = get_user_model()
 
-# Realios YouTube nuorodos testavimui (populiarūs klipai)
+# Realios YouTube nuorodos testavimui – parinktos tokios, kurias
+# leidžiama įterpti (embed) kituose puslapiuose (daugiausia NCS ir
+# kūrėjai, kurie neblokuoja įterpimo).
 YOUTUBE_URLS = [
     ("Rick Astley - Never Gonna Give You Up", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
-    ("a-ha - Take On Me", "https://www.youtube.com/watch?v=djV11Xbc914"),
-    ("Queen - Bohemian Rhapsody", "https://www.youtube.com/watch?v=fJ9rUzIMcZQ"),
-    ("Nirvana - Smells Like Teen Spirit", "https://www.youtube.com/watch?v=hTWKbfoikeg"),
-    ("Michael Jackson - Billie Jean", "https://www.youtube.com/watch?v=Zi_XLOBDo_Y"),
-    ("Toto - Africa", "https://www.youtube.com/watch?v=FTQbiNvZqaY"),
-    ("The Weeknd - Blinding Lights", "https://www.youtube.com/watch?v=4NRXx6U8ABQ"),
-    ("Daft Punk - Get Lucky", "https://www.youtube.com/watch?v=5NV6Rdv1a3I"),
-    ("Coldplay - Viva La Vida", "https://www.youtube.com/watch?v=dvgZkm1xWPE"),
-    ("Gotye - Somebody That I Used To Know", "https://www.youtube.com/watch?v=8UVNT4wvIGY"),
-    ("Eurythmics - Sweet Dreams", "https://www.youtube.com/watch?v=qeMFqkcPYcg"),
-    ("Survivor - Eye Of The Tiger", "https://www.youtube.com/watch?v=btPJPFnesV4"),
-    ("Journey - Don't Stop Believin'", "https://www.youtube.com/watch?v=1k8craCGpgs"),
-    ("Dua Lipa - Levitating", "https://www.youtube.com/watch?v=TUVcZfQe-Kw"),
-    ("Imagine Dragons - Believer", "https://www.youtube.com/watch?v=7wtfhZwyrcc"),
-    ("Ed Sheeran - Shape of You", "https://www.youtube.com/watch?v=JGwWNGJdvx8"),
+    ("Alan Walker - Faded", "https://www.youtube.com/watch?v=60ItHLz5WEA"),
+    ("Alan Walker - Alone", "https://www.youtube.com/watch?v=1-xGerv5FOk"),
+    ("Alan Walker - Spectre (NCS)", "https://www.youtube.com/watch?v=AOeY-nDp7hI"),
+    ("Cartoon - On & On (NCS)", "https://www.youtube.com/watch?v=K4DyBUG242c"),
+    ("Elektronomia - Sky High (NCS)", "https://www.youtube.com/watch?v=TW9d8vYrVFQ"),
+    ("Janji - Heroes Tonight (NCS)", "https://www.youtube.com/watch?v=3nQNiWdeH2Q"),
+    ("Jim Yosef - Firefly (NCS)", "https://www.youtube.com/watch?v=K-i1Up3fDgo"),
+    ("DEAF KEV - Invincible (NCS)", "https://www.youtube.com/watch?v=J2X5mJ3HDYE"),
+    ("Tobu - Hope (NCS)", "https://www.youtube.com/watch?v=EP625xQIGzs"),
+    ("Different Heaven - Nekozilla (NCS)", "https://www.youtube.com/watch?v=e7dp0NBmc6c"),
+    ("Elektronomia - Energy (NCS)", "https://www.youtube.com/watch?v=cJc3ncFO2f0"),
+    ("Marshmello - Alone", "https://www.youtube.com/watch?v=ALZHF5UqnU4"),
+    ("Culture Code - Make Me Move (NCS)", "https://www.youtube.com/watch?v=vBGiFtb8Rpw"),
+    ("Lensko - Cetus (NCS)", "https://www.youtube.com/watch?v=z1oHQjci9uY"),
+    ("Ship Wrek & Zookeepers - Ark (NCS)", "https://www.youtube.com/watch?v=cKopMt7ktBk"),
 ]
 
 GAME_THEMES = [

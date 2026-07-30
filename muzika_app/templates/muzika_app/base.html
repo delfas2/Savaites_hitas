@@ -206,12 +206,66 @@
 
         /* Mygtukų suapvalinimas */
         main :where(a, button).rounded-md { border-radius: 0.75rem; }        /* Animacijos klasė */
-        .animate-fadeIn { animation: fadeIn 0.4s ease-out; }
-
-        /* Balsavimo taškų mygtukas – pasirinkta būsena */
+        .animate-fadeIn { animation: fadeIn 0.4s ease-out; }        /* Balsavimo taškų mygtukas – pasirinkta būsena */
         .point-btn-selected {
             transform: scale(1.08);
             box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+        }
+
+        /* =========================================================
+           EKVALAIZERIO ANIMACIJA (dainų kėlimo baneris)
+           ========================================================= */
+        .equalizer {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 44px;
+        }
+        .equalizer .bar {
+            width: 5px;
+            border-radius: 3px;
+            background: linear-gradient(to top, #14b8a6, #2dd4bf, #5eead4);
+            animation: eq-bounce 1.1s ease-in-out infinite;
+            transform-origin: bottom;
+        }
+        .equalizer .bar:nth-child(1) { animation-delay: 0s;    height: 30%; }
+        .equalizer .bar:nth-child(2) { animation-delay: 0.2s;  height: 70%; }
+        .equalizer .bar:nth-child(3) { animation-delay: 0.4s;  height: 45%; }
+        .equalizer .bar:nth-child(4) { animation-delay: 0.1s;  height: 90%; }
+        .equalizer .bar:nth-child(5) { animation-delay: 0.5s;  height: 55%; }
+        .equalizer .bar:nth-child(6) { animation-delay: 0.3s;  height: 75%; }
+        .equalizer .bar:nth-child(7) { animation-delay: 0.15s; height: 40%; }        @keyframes eq-bounce {
+            0%, 100% { transform: scaleY(0.3); opacity: 0.7; }
+            50%      { transform: scaleY(1);   opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .equalizer .bar { animation: none; }
+        }
+
+        /* Rožinis ekvalaizerio variantas (balsavimo etapas) */
+        .equalizer.equalizer-pink .bar {
+            background: linear-gradient(to top, #db2777, #ec4899, #f9a8d4);
+        }
+
+        /* =========================================================
+           BALSAVIMO ANIMACIJA (pulsuojančios „širdelės/natos")
+           ========================================================= */
+        .vote-pulse {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .vote-pulse i {
+            animation: vote-beat 1.2s ease-in-out infinite;
+        }
+        .vote-pulse i:nth-child(2) { animation-delay: 0.2s; }
+        .vote-pulse i:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes vote-beat {
+            0%, 100% { transform: scale(1);   opacity: 0.65; }
+            50%      { transform: scale(1.35); opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .vote-pulse i { animation: none; }
         }
 
         /* =========================================================
@@ -288,10 +342,29 @@
         html:not(.dark) .bg-gradient-to-br[class*="from-amber-500/"] {
             background-image: linear-gradient(to bottom right, #fef3c7, #ffffff, #ffffff) !important;
             border-color: #fcd34d !important;
-        }
-        /* Gintarinis tekstas šviesioje temoje – tamsesnis, kad matytųsi */
+        }        /* Gintarinis tekstas šviesioje temoje – tamsesnis, kad matytųsi */
         html:not(.dark) .text-amber-300,
         html:not(.dark) .text-amber-200 { color: #b45309 !important; }
+
+        /* Balsavimo rezultatų taškų „chip'ai" – šviesūs tekstai tampa
+           tamsesni, kad būtų aiškiai matomi šviesiame fone */
+        html:not(.dark) .text-brand-200,
+        html:not(.dark) .text-brand-100 { color: #3730a3 !important; }
+        html:not(.dark) .text-purple-300,
+        html:not(.dark) .text-purple-200 { color: #6d28d9 !important; }
+        html:not(.dark) .text-slate-300,
+        html:not(.dark) .text-slate-200 { color: #334155 !important; }
+        html:not(.dark) .text-emerald-300,
+        html:not(.dark) .text-emerald-200 { color: #047857 !important; }
+        html:not(.dark) .text-teal-300,
+        html:not(.dark) .text-teal-200 { color: #0f766e !important; }
+        html:not(.dark) .text-brand-pink { color: #be185d !important; }
+        /* Pusiau permatomi spalvoti „chip" fonai – šiek tiek ryškesni,
+           kad kontrastas su tamsesniu tekstu būtų geras */
+        html:not(.dark) [class*="bg-amber-500/"] { background-color: rgba(245, 158, 11, 0.18) !important; }
+        html:not(.dark) [class*="bg-brand-500/"] { background-color: rgba(99, 102, 241, 0.15) !important; }
+        html:not(.dark) [class*="bg-purple-500/"] { background-color: rgba(168, 85, 247, 0.15) !important; }
+        html:not(.dark) [class*="bg-slate-500/"] { background-color: rgba(100, 116, 139, 0.15) !important; }
 
         /* Stiklo „chip'ai" hero banerio viduje (buvo bg-gray-900/80) */
         html:not(.dark) [class*="bg-gray-900/"].backdrop-blur-md {
@@ -346,9 +419,11 @@
                     <i class="fa-solid fa-house mr-1.5"></i>Pradžia
                 </a>                <a href="{% url 'my_groups' %}" class="nav-link px-4 py-2 rounded-full text-xs font-medium text-gray-400 hover:text-white transition {% if request.resolver_match.url_name == 'my_groups' %}active{% endif %}">
                     <i class="fa-solid fa-users mr-1.5"></i>Mano Grupės
-                </a>
-                <a href="{% url 'my_songs' %}" class="nav-link px-4 py-2 rounded-full text-xs font-medium text-gray-400 hover:text-white transition {% if request.resolver_match.url_name == 'my_songs' %}active{% endif %}">
+                </a>                <a href="{% url 'my_songs' %}" class="nav-link px-4 py-2 rounded-full text-xs font-medium text-gray-400 hover:text-white transition {% if request.resolver_match.url_name == 'my_songs' %}active{% endif %}">
                     <i class="fa-solid fa-compact-disc mr-1.5"></i>Mano Dainos
+                </a>
+                <a href="{% url 'all_songs' %}" class="nav-link px-4 py-2 rounded-full text-xs font-medium text-gray-400 hover:text-white transition {% if request.resolver_match.url_name == 'all_songs' %}active{% endif %}">
+                    <i class="fa-solid fa-headphones mr-1.5"></i>Visos Dainos
                 </a>
                 {% if user.is_superuser %}
                 <a href="{% url 'all_groups_list' %}" class="nav-link px-4 py-2 rounded-full text-xs font-medium text-gray-400 hover:text-white transition {% if request.resolver_match.url_name == 'all_groups_list' %}active{% endif %}">
@@ -410,6 +485,7 @@
             <a href="{% url 'home' %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'home' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Pradžia</a>
             <a href="{% url 'my_groups' %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'my_groups' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Mano Grupės</a>
             <a href="{% url 'my_songs' %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'my_songs' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Mano Dainos</a>
+            <a href="{% url 'all_songs' %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'all_songs' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Visos Dainos</a>
             {% if user.is_superuser %}
             <a href="{% url 'all_groups_list' %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'all_groups_list' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Visos Grupės</a>
             {% endif %}

@@ -85,7 +85,7 @@
             <div class="song-card glass-card rounded-2xl p-5 border border-gray-800 transition-all duration-300"
                  id="card-{{ song.id }}"
                  data-song="{{ song.id }}"
-                 data-search="{{ song.title }} {{ song.submitted_by.get_full_name|default:song.submitted_by.username }}">
+                 data-search="{{ song.title }}">
                 <div class="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-6">
                     {# Video + info #}
                     <div class="flex-1 flex flex-col md:flex-row gap-5 items-start md:items-center">                        <div class="w-full md:w-[420px] aspect-video rounded-xl overflow-hidden bg-black/40 border border-gray-800 shrink-0 shadow-xl">
@@ -103,11 +103,8 @@
                                     {% video song.youtube_url %}
                                 {% endif %}
                             {% endwith %}
-                        </div>
-                        <div class="flex-1">
-                            <span class="text-xs font-bold text-amber-400 uppercase tracking-wider">{{ forloop.counter|stringformat:"02d" }} Kūrinys</span>
-                            <h3 class="text-lg font-black text-white mt-1">{{ song.title }}</h3>
-                            <p class="text-sm text-gray-400 mb-3">Įkėlė: {{ song.submitted_by.get_full_name|default:song.submitted_by.username }}</p>
+                        </div>                        <div class="flex-1">
+                            <h3 class="text-lg font-black text-white mt-1 mb-3">{{ song.title }}</h3>
                             <a href="{{ song.youtube_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-gray-300 hover:text-amber-400 transition inline-flex items-center gap-1.5 bg-gray-800/80 px-3 py-1.5 rounded-lg border border-gray-700/60">
                                 <i class="fa-brands fa-youtube text-rose-500 text-sm"></i> Atidaryti „YouTube“
                             </a>

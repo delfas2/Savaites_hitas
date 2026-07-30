@@ -19,6 +19,7 @@ from collections import defaultdict
 from datetime import timedelta
 
 from .models import Group, generate_unique_code, Membership, Game, Song, Vote
+from .templatetags.muzika_tags import youtube_id
 from .forms import (
     GroupForm, SignUpForm, GameForm, SongForm,
     UserProfileEditForm
@@ -314,11 +315,63 @@ def my_songs_view(request):
         'songs_data': songs_data,
         'total_songs': total_songs,
         'total_points': total_points_sum,
-        'avg_points': avg_points,
-        'wins_count': wins_count,
+        'avg_points': avg_points,        'wins_count': wins_count,
     }
     return render(request, 'muzika_app/my_songs.html', context)
 
+
+@login_required
+def all_songs_view(request):
+    """
+    Rodo visas kada nors įkeltas dainas, suskirstytas pagal žaidimus
+    (kaip grojaraščius/playlistus). Rodomos tik tų grupių, kuriose
+    vartotojas yra narys, dainos. Vartotojas gali pasirinkti vieną ar
+    kelis grojaraščius ir tiesiog klausytis dainų.
+    """
+    # Grupės, kuriose vartotojas dalyvauja
+    user_group_ids = Group.objects.filter(members=request.user).values_list('id', flat=True)
+
+    games = (
+        Game.objects
+        .filter(group_id__in=user_group_ids, songs__isnull=False)
+        .select_related('group')
+        .prefetch_related('songs')
+        .distinct()
+        .order_by('-created_at')
+    )
+
+    playlists = []
+    total_songs = 0
+    for game in games:
+        songs = list(game.songs.all())
+        song_list = []
+        for song in songs:
+            vid = youtube_id(song.youtube_url)
+            if not vid:
+                continue
+            song_list.append({
+                'id': song.id,
+                'title': song.title,
+                'youtube_url': song.youtube_url,
+                'video_id': vid,
+            })
+        if not song_list:
+            continue
+        total_songs += len(song_list)
+        playlists.append({
+            'game_id': game.id,
+            'name': game.name,
+            'group_name': game.group.name,
+            'songs': song_list,
+            'song_count': len(song_list),
+        })
+
+    context = {
+        'playlists': playlists,
+        'total_songs': total_songs,
+        'total_playlists': len(playlists),
+    }
+    return render(request, 'muzika_app/all_songs.html', context)
 
 
 # --- ŽAIDIMŲ VALDYMAS ---
