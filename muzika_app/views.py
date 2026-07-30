@@ -327,13 +327,17 @@ def all_songs_view(request):
     (kaip grojaraščius/playlistus). Rodomos tik tų grupių, kuriose
     vartotojas yra narys, dainos. Vartotojas gali pasirinkti vieną ar
     kelis grojaraščius ir tiesiog klausytis dainų.
-    """
-    # Grupės, kuriose vartotojas dalyvauja
-    user_group_ids = Group.objects.filter(members=request.user).values_list('id', flat=True)
+    """    # Grupės, kuriose vartotojas dalyvauja.
+    # Superuser mato visų grupių dainas (visą istoriją).
+    if request.user.is_superuser:
+        games_qs = Game.objects.all()
+    else:
+        user_group_ids = Group.objects.filter(members=request.user).values_list('id', flat=True)
+        games_qs = Game.objects.filter(group_id__in=user_group_ids)
 
     games = (
-        Game.objects
-        .filter(group_id__in=user_group_ids, songs__isnull=False)
+        games_qs
+        .filter(songs__isnull=False)
         .select_related('group')
         .prefetch_related('songs')
         .distinct()
@@ -347,13 +351,11 @@ def all_songs_view(request):
         song_list = []
         for song in songs:
             vid = youtube_id(song.youtube_url)
-            if not vid:
-                continue
             song_list.append({
                 'id': song.id,
                 'title': song.title,
                 'youtube_url': song.youtube_url,
-                'video_id': vid,
+                'video_id': vid,  # gali būti tuščia, jei nuorodos formatas neatpažintas
             })
         if not song_list:
             continue

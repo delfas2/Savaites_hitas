@@ -251,13 +251,21 @@
             btn.classList.remove('bg-brand-pink', 'border-brand-pink', 'text-white');
             btn.classList.add('bg-gray-800', 'text-gray-200');
         }
-    }
-
-    // ============ Grojimas ============
+    }    // ============ Grojimas ============
     function playAt(index) {
         if (index < 0 || index >= queue.length) return;
         currentIndex = index;
         const song = queue[index];
+
+        // Jei nėra galiojančio YouTube ID – pažymim ir peršokam
+        if (!song.video_id) {
+            markUnavailable(index);
+            if (index < queue.length - 1) {
+                setTimeout(() => playNext(), 300);
+            }
+            highlightCurrent();
+            return;
+        }
 
         if (ytReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
             ytPlayer.loadVideoById(song.video_id);
