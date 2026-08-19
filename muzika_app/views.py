@@ -134,9 +134,14 @@ def group_admin_view(request, group_code):
 
     active_games_qs = group.games.filter(
         models.Q(submission_start_date__lte=now, submission_end_date__gte=now) |
-        models.Q(voting_start_date__lte=now, voting_end_date__gte=now)    ).order_by('-created_at')
-
+        models.Q(voting_start_date__lte=now, voting_end_date__gte=now)
+    ).order_by('-created_at')
     for game in active_games_qs:
+        # Jei žaidimo rezultatai jau paskelbti (yra laimėtojų), jis nebelaikomas
+        # aktyviu – rodomas kaip užbaigtas, nesvarbu, kad balsavimo pabaigos data
+        # dar nepraėjo.
+        if game.winners.exists():
+            continue
         if game.is_voting_active():
             active_game = game
             active_phase = 'voting'
@@ -155,12 +160,17 @@ def group_admin_view(request, group_code):
     winners = []
     if not active_game:
         latest_finished_game = Game.objects.filter(
-            group=group, voting_end_date__isnull=False, voting_end_date__lte=now
-        ).order_by('-voting_end_date').prefetch_related('winners').first() # Pridėtas prefetch
+            group=group
+        ).filter(
+            models.Q(voting_end_date__isnull=False, voting_end_date__lte=now) |
+            models.Q(winners__isnull=False)
+        ).distinct().order_by('-voting_end_date').prefetch_related('winners').first() # Pridėtas prefetch
 
         if latest_finished_game:
             last_completed_game = latest_finished_game
-            winners = list(latest_finished_game.winners.all()) # Gaunam laimėtojus iš M2M    # --- Dainos kėlimo/redagavimo modalui (tik kėlimo fazėje) ---
+            winners = list(latest_finished_game.winners.all()) # Gaunam laimėtojus iš M2M
+
+    # --- Dainos kėlimo/redagavimo modalui (tik kėlimo fazėje) ---
     user_song = None
     song_form = None
     if active_game and active_phase == 'submission' and is_member:

@@ -38,12 +38,15 @@
         <div class="absolute -left-10 -top-10 w-72 h-72 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-900/80 border border-gray-800 text-xs text-amber-400 font-medium mb-3">
+            <div>                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-900/80 border border-gray-800 text-xs text-amber-400 font-medium mb-3">
                     <i class="fa-solid fa-star text-amber-400"></i> Eurovizinis Taškų Skirstymas
-                </div>                <h2 class="text-2xl md:text-3xl font-black text-white tracking-tight">Paskirstykite 5, 4, 3, 2, 1 taškus dainoms 🎵</h2>
+                </div>
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-xs text-purple-300 font-medium mb-3 sm:ml-2">
+                    <i class="fa-solid fa-eye-slash"></i> Aklas klausymas: atlikėjų vardai paslėpti
+                </div>
+                <h2 class="text-2xl md:text-3xl font-black text-white tracking-tight">Paskirstykite 5, 4, 3, 2, 1 taškus dainoms 🎵</h2>
                 <p class="text-gray-400 mt-2 text-sm max-w-2xl">
-                    Peržiūrėkite klipus ir skirkite balus. <strong class="text-gray-200">Taisyklė:</strong> kiekvienas taškų skaičius (5, 4, 3, 2 arba 1) gali būti panaudotas <strong class="text-gray-200">tik vieną kartą</strong>. Už savo dainą balsuoti negalima.
+                    Peržiūrėkite klipus ir skirkite balus. <strong class="text-gray-200">Taisyklė:</strong> kiekvienas taškų skaičius (5, 4, 3, 2 arba 1) gali būti panaudotas <strong class="text-gray-200">tik vieną kartą</strong>. Už savo dainą balsuoti negalima. Dainos rodomos <strong class="text-gray-200">atsitiktine tvarka be atlikėjo vardo</strong>, kad balsavimas būtų nešališkas.
                 </p>
             </div>
 
@@ -65,7 +68,7 @@
     <div class="flex flex-wrap items-center justify-between gap-4 pb-3 mb-6 border-b border-gray-800">
         <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Dainos vertinimui</span>
         <div class="relative w-full sm:w-64">
-            <input type="text" id="song-search" oninput="filterSongs()" placeholder="Ieškoti dainos ar nario..." class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2 pl-10 text-xs text-gray-200 focus:outline-none focus:border-brand-500">
+            <input type="text" id="song-search" oninput="filterSongs()" placeholder="Ieškoti dainos..." class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2 pl-10 text-xs text-gray-200 focus:outline-none focus:border-brand-500">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-500 text-xs"></i>
         </div>
     </div>

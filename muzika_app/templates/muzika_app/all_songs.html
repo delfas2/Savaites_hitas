@@ -102,12 +102,8 @@
 
     {# --- DEŠINĖ: GROTUVAS + EILĖ --- #}
     <div class="lg:col-span-2 space-y-4">
-        {# Muzikos grotuvas (tik garsas – vaizdas paslėptas) #}
-        <div class="glass-card p-5 rounded-2xl border border-gray-800">
-            {# Paslėptas YouTube grotuvas: realaus dydžio, iškeltas už ekrano ribų (kad YouTube neribotų buferio) #}
-            <div id="player-wrap" style="position:fixed; bottom:0; left:-2000px; width:640px; height:360px; z-index:-1;">
-                <div id="player-placeholder"></div>
-            </div>
+        {# Muzikos grotuvas (tik garsas – vaizdas paslėptas) #}        <div class="glass-card p-5 rounded-2xl border border-gray-800">
+            {# Grojimą tvarko globalus grotuvas (žr. _global_player.html) #}
 
             {# Albumo viršelis / miniatiūra #}
             <div class="flex flex-col sm:flex-row items-center gap-5">
@@ -210,97 +206,85 @@
         del: (pid) => `/grojarasciai/${pid}/trinti/`,
         add: (pid, sid) => `/grojarasciai/${pid}/prideti/${sid}/`,
         remove: (pid, sid) => `/grojarasciai/${pid}/pasalinti/${sid}/`,
-    };
-
-    let queue = [];          // masyvas dainų objektų {id, title, video_id, playlist_name}
+    };    let queue = [];          // vietinė kopija atvaizdavimui (sinchronizuota su GP)
     let currentIndex = -1;
     let shuffle = false;
-    let ytPlayer = null;
-    let ytReady = false;
-    let progressTimer = null;
 
-    // ============ YouTube IFrame API ============
-    (function loadYT() {
-        const tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        document.head.appendChild(tag);
-    })();
+    // Šiame puslapyje rodomas ir pilnas grotuvas, ir apatinė mini juosta
+    // (mini juosta rodoma tik kai kažkas groja).
 
-    window.onYouTubeIframeAPIReady = function () {
-        ytReady = true;
-    };
+    // ============ Sinchronizacija su globaliu grotuvu (GP) ============
+    // Visa grojimo logika perkelta į globalų GP grotuvą (_global_player.html),
+    // kad muzika grotų fone naršant po kitus puslapius. Čia tik atnaujinam
+    // pilno grotuvo vartotojo sąsają pagal GP įvykius.
+    function syncFromGP() {
+        if (!window.GP) return;
+        queue = GP.queue;
+        currentIndex = GP.index;
+        shuffle = GP.shuffle;
+        renderQueue();
+        updateFullUI(GP.current());
+        highlightCurrent();
+        applyShuffleBtn();
+    }
 
-    // Sukuria PASLĖPTĄ YouTube grotuvą – vaizdas nerodomas, groja tik garsas.
-    function createPlayer(videoId) {
-        ytPlayer = new YT.Player('player-placeholder', {
-            width: '320',
-            height: '180',
-            videoId: videoId,
-            host: 'https://www.youtube-nocookie.com',
-            playerVars: {
-                autoplay: 1,
-                controls: 0,
-                rel: 0,
-                modestbranding: 1,
-                playsinline: 1,
-                enablejsapi: 1            },
-            events: {
-                onReady: onPlayerReady,
-                onStateChange: onPlayerStateChange,
-                onError: onPlayerError
-            }
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!window.GP) return;
+        GP.on('queue', () => { queue = GP.queue; renderQueue(); highlightCurrent(); });
+        GP.on('change', (song) => { currentIndex = GP.index; updateFullUI(song); highlightCurrent(); });
+        GP.on('state', (playing) => updatePlayIcon(playing));
+        GP.on('shuffle', () => { shuffle = GP.shuffle; applyShuffleBtn(); });
+        GP.on('progress', ({ cur, dur, pct }) => {
+            document.getElementById('seek-fill').style.width = pct + '%';
+            document.getElementById('seek-handle').style.left = pct + '%';
+            document.getElementById('time-current').textContent = fmtTime(cur);
+            document.getElementById('time-total').textContent = fmtTime(dur);
         });
-    }
+        // Jei GP jau turi eilę (pvz. atkurta iš sessionStorage) – atvaizduojam
+        if (GP.queue && GP.queue.length) syncFromGP();
+    });
 
-    function onPlayerReady(e) {
-        try { e.target.playVideo(); } catch (err) {}
-        startProgressTimer();
-    }
-
-    function onPlayerStateChange(e) {
-        // 1 = PLAYING, 2 = PAUSED, 0 = ENDED
-        updatePlayIcon(e.data === YT.PlayerState.PLAYING);
-        if (e.data === YT.PlayerState.PLAYING) {
-            startProgressTimer();
+    function updateFullUI(song) {
+        const titleEl = document.getElementById('now-playing-title');
+        const subEl = document.getElementById('now-playing-sub');
+        const ytLink = document.getElementById('youtube-link');
+        if (!song) {
+            titleEl.textContent = 'Niekas negroja';
+            subEl.textContent = 'Pasirinkite grojaraštį';
+            setCoverArt(null);
+            if (ytLink) { ytLink.classList.add('hidden'); ytLink.classList.remove('inline-flex'); }
+            return;
         }
-        if (e.data === YT.PlayerState.ENDED) {
-            playNext();
+        titleEl.textContent = song.title;
+        subEl.textContent = song.playlist_name || '';
+        setCoverArt(song.video_id);
+        if (ytLink) {
+            ytLink.href = song.youtube_url || ('https://www.youtube.com/watch?v=' + song.video_id);
+            ytLink.classList.remove('hidden');
+            ytLink.classList.add('inline-flex');
         }
-    }
-
-    // ============ Play / Pauzė ============
-    function togglePlay() {
-        if (!ytPlayer || typeof ytPlayer.getPlayerState !== 'function') return;
-        const state = ytPlayer.getPlayerState();
-        if (state === YT.PlayerState.PLAYING) {
-            ytPlayer.pauseVideo();
+    }    function applyShuffleBtn() {
+        const btn = document.getElementById('shuffle-btn');
+        if (!btn) return;
+        if (shuffle) {
+            btn.classList.add('bg-brand-pink', 'border-brand-pink', 'text-white');
+            btn.classList.remove('bg-gray-800', 'text-gray-200');
         } else {
-            ytPlayer.playVideo();
+            btn.classList.remove('bg-brand-pink', 'border-brand-pink', 'text-white');
+            btn.classList.add('bg-gray-800', 'text-gray-200');
         }
-    }    function updatePlayIcon(isPlaying) {
+    }
+
+    // ============ Play / Pauzė (deleguota GP) ============
+    function togglePlay() { if (window.GP) GP.toggle(); }
+
+    function updatePlayIcon(isPlaying) {
         const btn = document.getElementById('play-btn');
         if (!btn) return;
         // Font Awesome SVG režimas pakeičia <i> į <svg>, todėl keičiam viso
         // mygtuko turinį nauju <i>, kad ikona tikrai persijungtų.
         btn.innerHTML = '<i id="play-icon" class="fa-solid ' +
             (isPlaying ? 'fa-pause' : 'fa-play') + '"></i>';
-    }
-
-    // ============ Laiko juosta ============
-    function startProgressTimer() {
-        if (progressTimer) return;
-        progressTimer = setInterval(updateProgress, 500);
-    }
-
-    function updateProgress() {
-        if (!ytPlayer || typeof ytPlayer.getCurrentTime !== 'function') return;
-        const cur = ytPlayer.getCurrentTime() || 0;
-        const dur = ytPlayer.getDuration() || 0;
-        const pct = dur ? (cur / dur * 100) : 0;
-        document.getElementById('seek-fill').style.width = pct + '%';
-        document.getElementById('seek-handle').style.left = pct + '%';
-        document.getElementById('time-current').textContent = fmtTime(cur);
-        document.getElementById('time-total').textContent = fmtTime(dur);
     }
 
     function fmtTime(sec) {
@@ -310,15 +294,14 @@
         return m + ':' + (s < 10 ? '0' : '') + s;
     }
 
-    // Paspaudimas ant laiko juostos – peršokimas
+    // Paspaudimas ant laiko juostos – peršokimas (deleguota GP)
     document.addEventListener('DOMContentLoaded', function () {
         const bar = document.getElementById('seek-bar');
         if (bar) {
             bar.addEventListener('click', function (ev) {
-                if (!ytPlayer || typeof ytPlayer.getDuration !== 'function') return;
+                if (!window.GP) return;
                 const rect = bar.getBoundingClientRect();
-                const pct = (ev.clientX - rect.left) / rect.width;
-                const dur = ytPlayer.getDuration() || 0;                ytPlayer.seekTo(dur * pct, true);
+                GP.seekToPct((ev.clientX - rect.left) / rect.width);
             });
         }
         // Atvaizduojam vartotojo grojaraščius
@@ -340,26 +323,7 @@
             img.classList.add('hidden');
             ph.classList.remove('hidden');
         }
-    }
-
-    // YouTube klaidų kodai:
-    // 2 = blogas ID, 5 = HTML5 klaida, 100 = pašalinta/nerasta,
-    // 101 / 150 = savininkas uždraudė įterpimą (embedding)
-    function onPlayerError(e) {
-        const song = queue[currentIndex];
-        const title = song ? song.title : '';
-        // Pažymim eilėje kaip nepasiekiamą
-        markUnavailable(currentIndex);
-        // Automatiškai peršokam prie kitos dainos
-        if (currentIndex < queue.length - 1) {
-            setTimeout(() => playNext(), 800);
-        } else {
-            document.getElementById('now-playing-title').textContent = 'Daina nepasiekiama';
-            document.getElementById('now-playing-sub').textContent =
-                title ? ('„' + title + '" negalima groti čia') : '';
-        }
-    }
-
+    }    // YouTube klaidų kodai apdorojami globaliame GP grotuve.
     function markUnavailable(index) {
         const row = document.querySelector('.queue-row[data-index="' + index + '"]');
         if (!row) return;
@@ -384,11 +348,12 @@
             return;
         }
 
-        queue = [];
+        const q = [];
         selected.forEach(gid => {
             const pl = PLAYLIST_MAP[gid];
             if (!pl) return;
-            pl.songs.forEach(s => {                queue.push({
+            pl.songs.forEach(s => {
+                q.push({
                     id: s.id,
                     title: s.title,
                     video_id: s.video_id,
@@ -396,11 +361,9 @@
                     playlist_name: pl.name,
                 });
             });
-        });        if (shuffle) shuffleArray(queue);
+        });
 
-        renderQueue();
-        currentIndex = -1;
-        playAt(0);
+        if (window.GP) GP.setQueue(q, 0, true);
     }
 
     // ============ TABAI ============
@@ -512,21 +475,17 @@
                 pl.song_count = data.song_count;
             }
             renderMyPlaylists();
-        });
-    }    function playMyPlaylist(pid) {
+        });    }    function playMyPlaylist(pid) {
         const pl = MY_PLAYLISTS.find(p => p.id === pid);
         if (!pl || !pl.songs.length) { alert('Grojaraštis tuščias.'); return; }
-        queue = pl.songs.map(s => ({
+        const q = pl.songs.map(s => ({
             id: s.id,
             title: s.title,
             video_id: s.video_id,
             youtube_url: s.youtube_url,
             playlist_name: pl.name,
         }));
-        if (shuffle) shuffleArray(queue);
-        renderQueue();
-        currentIndex = -1;
-        playAt(0);
+        if (window.GP) GP.setQueue(q, 0, true);
     }
 
     function shuffleArray(arr) {
@@ -537,68 +496,20 @@
     }
 
     function toggleShuffle() {
-        shuffle = !shuffle;
-        const btn = document.getElementById('shuffle-btn');
-        if (shuffle) {
-            btn.classList.add('bg-brand-pink', 'border-brand-pink', 'text-white');
-            btn.classList.remove('bg-gray-800', 'text-gray-200');
-        } else {
-            btn.classList.remove('bg-brand-pink', 'border-brand-pink', 'text-white');
-            btn.classList.add('bg-gray-800', 'text-gray-200');
-        }
-    }    // ============ Grojimas ============
+        if (window.GP) GP.toggleShuffle();
+    }
+
+    // ============ Grojimas (deleguota GP) ============
     function playAt(index) {
-        if (index < 0 || index >= queue.length) return;
-        currentIndex = index;
-        const song = queue[index];
-
-        // Jei nėra galiojančio YouTube ID – pažymim ir peršokam
-        if (!song.video_id) {
-            markUnavailable(index);
-            if (index < queue.length - 1) {
-                setTimeout(() => playNext(), 300);
-            }
-            highlightCurrent();
-            return;
-        }        if (ytReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
-            // Jau turim grotuvą – tiesiog užkraunam kitą dainą
-            ytPlayer.loadVideoById(song.video_id);
-        } else if (ytReady) {
-            createPlayer(song.video_id);
-        } else {
-            // API dar neįsikrovė – palaukiam
-            const wait = setInterval(() => {
-                if (ytReady) {
-                    clearInterval(wait);
-                    createPlayer(song.video_id);
-                }
-            }, 200);
-        }        setCoverArt(song.video_id);
-        document.getElementById('now-playing-title').textContent = song.title;
-        document.getElementById('now-playing-sub').textContent = song.playlist_name;
-
-        // YouTube nuoroda – atidaro dainą YouTube puslapyje
-        const ytLink = document.getElementById('youtube-link');
-        if (ytLink) {
-            const url = song.youtube_url || ('https://www.youtube.com/watch?v=' + song.video_id);
-            ytLink.href = url;
-            ytLink.classList.remove('hidden');
-            ytLink.classList.add('inline-flex');
-        }
-
-        highlightCurrent();
+        if (window.GP) GP.playAt(index, true);
     }
 
     function playNext() {
-        if (currentIndex < queue.length - 1) {
-            playAt(currentIndex + 1);
-        }
+        if (window.GP) GP.next();
     }
 
     function playPrev() {
-        if (currentIndex > 0) {
-            playAt(currentIndex - 1);
-        }
+        if (window.GP) GP.prev();
     }
 
     // ============ Eilės atvaizdavimas ============

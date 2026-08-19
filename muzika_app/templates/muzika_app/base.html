@@ -492,10 +492,8 @@
             <a href="{% url 'profile_edit' %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'profile_edit' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Profilis</a>
         </div>
         {% endif %}
-    </header>
-
-    {# PAGRINDINIS TURINYS #}
-    <main class="max-w-7xl mx-auto px-4 lg:px-8 py-8 w-full flex-grow animate-fadeIn">
+    </header>    {# PAGRINDINIS TURINYS #}
+    <main id="pjax-main" class="max-w-7xl mx-auto px-4 lg:px-8 py-8 w-full flex-grow animate-fadeIn pb-32">
         {% block content %}
             <h1 class="text-2xl font-bold text-white">Sveiki atvykę!</h1>
             <p class="mt-2 text-gray-400">Čia bus rodomas pagrindinis puslapio turinys.</p>
@@ -512,7 +510,157 @@
         </div>
     </footer>
 
-    {% block scripts %}{% endblock scripts %}    {# Lucide ikonų inicializavimas #}
+    {# Puslapio scenarijai – perkraunami per PJAX navigaciją #}
+    <div id="pjax-scripts">
+        {% block scripts %}{% endblock scripts %}
+    </div>    {# Globalus grotuvas – groja fone naršant po puslapius #}
+    {% if user.is_authenticated %}
+        {% include 'muzika_app/_global_player.html' %}
+    {% endif %}    {% comment %}
+       PJAX NAVIGACIJA – keičiam tik puslapio turinį (be viso puslapio
+       perkrovimo), kad globalaus grotuvo iframe liktų gyvas ir muzika
+       nenutrūktų pereinant tarp puslapių.
+    {% endcomment %}
+    <script>
+    (function () {
+        const MAIN = 'pjax-main';
+        const SCRIPTS = 'pjax-scripts';        // Paleidžia visus scenarijus, esančius pateiktame konteineryje
+        // (innerHTML įterpti <script> savaime nevykdomi).
+        // Kiekvieno scenarijaus kodą apgaubiam IIFE, kad jo `const`/`let`
+        // deklaracijos būtų izoliuotos (grįžus į tą patį puslapį nekiltų
+        // „already declared" klaidų). Funkcijų deklaracijas automatiškai
+        // atskleidžiam į `window`, kad veiktų inline `onclick` valdikliai.
+        function runScripts(container) {
+            container.querySelectorAll('script').forEach(function (old) {
+                const src = old.getAttribute('src');
+                const s = document.createElement('script');
+                for (const attr of old.attributes) {
+                    if (attr.name === 'src') continue;
+                    s.setAttribute(attr.name, attr.value);
+                }
+                if (src) {
+                    s.src = src;
+                } else {
+                    const code = old.textContent || '';
+                    // Randam viršutinio lygio funkcijų vardus ir atskleidžiam į window
+                    const names = new Set();
+                    const re = /function\s+([A-Za-z0-9_$]+)\s*\(/g;
+                    let m;
+                    while ((m = re.exec(code)) !== null) names.add(m[1]);
+                    let exposez = '';
+                    names.forEach(n => {
+                        exposez += `try{window[${JSON.stringify(n)}]=${n};}catch(e){}\n`;
+                    });
+                    s.textContent = '(function(){\n' + code + '\n' + exposez + '})();';
+                }
+                old.parentNode.replaceChild(s, old);
+            });
+        }
+
+        function samePage(url) {
+            try {
+                const u = new URL(url, location.href);
+                return u.pathname === location.pathname && u.search === location.search;
+            } catch (e) { return false; }
+        }
+
+        function shouldHandle(a) {
+            if (!a) return false;
+            if (a.target && a.target !== '' && a.target !== '_self') return false;
+            if (a.hasAttribute('download')) return false;
+            if (a.dataset.noPjax !== undefined) return false;
+            const href = a.getAttribute('href');
+            if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return false;
+            const url = new URL(href, location.href);
+            if (url.origin !== location.origin) return false;   // tik vidinės nuorodos
+            // Nekeičiam admin ar failų parsisiuntimo nuorodų
+            if (url.pathname.startsWith('/admin')) return false;
+            return true;
+        }
+
+        async function navigate(url, push) {
+            const main = document.getElementById(MAIN);
+            if (!main) { location.href = url; return; }
+
+            // Švelnus krovimosi indikatorius
+            main.style.opacity = '0.5';
+            main.style.pointerEvents = 'none';
+
+            try {
+                const resp = await fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-PJAX': 'true' },
+                    credentials: 'same-origin',
+                });
+                // Jei serveris peradresavo į kitą originą ar login – pilnas krovimas
+                if (resp.redirected && new URL(resp.url).origin !== location.origin) {
+                    location.href = resp.url; return;
+                }
+                const html = await resp.text();
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+
+                const newMain = doc.getElementById(MAIN);
+                const newScripts = doc.getElementById(SCRIPTS);
+                if (!newMain) { location.href = url; return; }   // ne mūsų šablonas
+
+                // Išvalom praeito puslapio GP klausytojus, kad nesikauptų
+                if (window.GP && typeof GP._resetPageListeners === 'function') {
+                    GP._resetPageListeners();
+                }
+
+                // Pakeičiam turinį
+                main.innerHTML = newMain.innerHTML;
+                main.className = newMain.className;                // Pakeičiam ir paleidžiam puslapio scenarijus
+                const scriptsHost = document.getElementById(SCRIPTS);
+                if (scriptsHost) {
+                    scriptsHost.innerHTML = newScripts ? newScripts.innerHTML : '';
+                    runScripts(scriptsHost);
+                }
+
+                // Atnaujinam antraštę ir istorija
+                if (doc.title) document.title = doc.title;
+                const finalUrl = resp.redirected ? resp.url : url;
+                if (push) history.pushState({ pjax: true }, '', finalUrl);
+
+                // Puslapio scenarijai dažnai registruoja DOMContentLoaded
+                // klausytojus – PJAX metu jis nebeįvyksta, tad sukeliam patys,
+                // kad naujo puslapio init'ai suveiktų.
+                document.dispatchEvent(new Event('DOMContentLoaded'));
+
+                // Iš naujo paleidžiam bendrus init'us
+                if (typeof lucide !== 'undefined') { try { lucide.createIcons(); } catch (e) {} }
+                if (typeof initFlatpickr === 'function') initFlatpickr();
+                // Pranešam grotuvui, kad UI perpieštas (jei puslapis to klausosi)
+                if (window.GP && typeof GP._emit === 'function') {
+                    GP._emit('change', GP.current());
+                    GP._emit('state', GP.playing);
+                }
+
+                window.scrollTo(0, 0);
+            } catch (e) {
+                location.href = url;   // nepavykus – įprastas krovimas
+            } finally {
+                main.style.opacity = '';
+                main.style.pointerEvents = '';
+            }
+        }
+
+        document.addEventListener('click', function (ev) {
+            if (ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+            const a = ev.target.closest('a');
+            if (!shouldHandle(a)) return;
+            const href = a.href;
+            if (samePage(href)) return;
+            ev.preventDefault();
+            navigate(href, true);
+        });
+
+        window.addEventListener('popstate', function () {
+            navigate(location.href, false);
+        });
+    })();
+    </script>
+
+    {# Lucide ikonų inicializavimas #}
     <script>
       try {
         if (typeof lucide !== 'undefined') {
