@@ -46,7 +46,7 @@
                 </div>
                 <h2 class="text-2xl md:text-3xl font-black text-white tracking-tight">Paskirstykite 5, 4, 3, 2, 1 taškus dainoms 🎵</h2>
                 <p class="text-gray-400 mt-2 text-sm max-w-2xl">
-                    Peržiūrėkite klipus ir skirkite balus. <strong class="text-gray-200">Taisyklė:</strong> kiekvienas taškų skaičius (5, 4, 3, 2 arba 1) gali būti panaudotas <strong class="text-gray-200">tik vieną kartą</strong>. Už savo dainą balsuoti negalima. Dainos rodomos <strong class="text-gray-200">atsitiktine tvarka be atlikėjo vardo</strong>, kad balsavimas būtų nešališkas.
+                    Peržiūrėkite klipus ir skirkite balus. <strong class="text-gray-200">Taisyklė:</strong> kiekvienas taškų skaičius (5, 4, 3, 2 arba 1) gali būti panaudotas <strong class="text-gray-200">tik vieną kartą</strong>. Už savo dainą balsuoti negalima. Dainos rodomos <strong class="text-gray-200">atsitiktine tvarka, nenurodant kas įkėlė</strong>, kad balsavimas būtų nešališkas.
                 </p>
             </div>
 
@@ -56,9 +56,8 @@
                 <div class="flex justify-center items-center gap-2" id="available-points-badges">
                     <span id="badge-5" class="w-9 h-9 rounded-lg bg-amber-500 text-gray-950 font-black text-sm flex items-center justify-center transition-all shadow-md">5</span>
                     <span id="badge-4" class="w-9 h-9 rounded-lg bg-brand-500 text-white font-black text-sm flex items-center justify-center transition-all shadow-md">4</span>
-                    <span id="badge-3" class="w-9 h-9 rounded-lg bg-brand-600 text-white font-black text-sm flex items-center justify-center transition-all shadow-md">3</span>
-                    <span id="badge-2" class="w-9 h-9 rounded-lg bg-gray-700 text-gray-200 font-black text-sm flex items-center justify-center transition-all shadow-md">2</span>
-                    <span id="badge-1" class="w-9 h-9 rounded-lg bg-gray-700 text-gray-200 font-black text-sm flex items-center justify-center transition-all shadow-md">1</span>
+                    <span id="badge-3" class="w-9 h-9 rounded-lg bg-brand-600 text-white font-black text-sm flex items-center justify-center transition-all shadow-md">3</span>                    <span id="badge-2" class="w-9 h-9 rounded-lg bg-sky-500 text-white font-black text-sm flex items-center justify-center transition-all shadow-md">2</span>
+                    <span id="badge-1" class="w-9 h-9 rounded-lg bg-sky-600 text-white font-black text-sm flex items-center justify-center transition-all shadow-md">1</span>
                 </div>
             </div>
         </div>
@@ -126,9 +125,8 @@
                         <span class="text-xs font-semibold text-gray-400 mb-3">Skirti taškus:</span>                        <div class="flex items-center gap-2" id="points-group-{{ song.id }}">
                             <button type="button" onclick="setPoints('{{ song.id }}', 5)" data-pts="5" class="pts-btn w-10 h-10 rounded-xl font-black text-sm border border-gray-700 bg-gray-800 text-gray-300 hover:bg-amber-500 hover:text-gray-950 transition-all">5</button>
                             <button type="button" onclick="setPoints('{{ song.id }}', 4)" data-pts="4" class="pts-btn w-10 h-10 rounded-xl font-black text-sm border border-gray-700 bg-gray-800 text-gray-300 hover:bg-brand-500 hover:text-white transition-all">4</button>
-                            <button type="button" onclick="setPoints('{{ song.id }}', 3)" data-pts="3" class="pts-btn w-10 h-10 rounded-xl font-black text-sm border border-gray-700 bg-gray-800 text-gray-300 hover:bg-brand-600 hover:text-white transition-all">3</button>
-                            <button type="button" onclick="setPoints('{{ song.id }}', 2)" data-pts="2" class="pts-btn w-10 h-10 rounded-xl font-black text-sm border border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-600 hover:text-white transition-all">2</button>
-                            <button type="button" onclick="setPoints('{{ song.id }}', 1)" data-pts="1" class="pts-btn w-10 h-10 rounded-xl font-black text-sm border border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-600 hover:text-white transition-all">1</button>
+                            <button type="button" onclick="setPoints('{{ song.id }}', 3)" data-pts="3" class="pts-btn w-10 h-10 rounded-xl font-black text-sm border border-gray-700 bg-gray-800 text-gray-300 hover:bg-brand-600 hover:text-white transition-all">3</button>                            <button type="button" onclick="setPoints('{{ song.id }}', 2)" data-pts="2" class="pts-btn w-10 h-10 rounded-xl font-black text-sm border border-gray-700 bg-gray-800 text-gray-300 hover:bg-sky-500 hover:text-white transition-all">2</button>
+                            <button type="button" onclick="setPoints('{{ song.id }}', 1)" data-pts="1" class="pts-btn w-10 h-10 rounded-xl font-black text-sm border border-gray-700 bg-gray-800 text-gray-300 hover:bg-sky-600 hover:text-white transition-all">1</button>
                             <button type="button" onclick="setPoints('{{ song.id }}', 0)" data-pts="0" title="Atšaukti tašką" class="w-10 h-10 rounded-xl font-medium text-sm border border-gray-800 bg-gray-900 text-gray-500 hover:text-rose-400 transition-all"><i class="fa-solid fa-xmark"></i></button>
                         </div>
                         <span id="status-{{ song.id }}" class="text-[11px] font-bold text-gray-500 mt-3">Taškų neskirta</span>
@@ -149,10 +147,16 @@
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold">
                     <i class="fa-solid fa-check-double"></i>
-                </div>
-                <div>
+                </div>                <div>
                     <h4 id="summary-title" class="font-extrabold text-sm text-white">Liko paskirstyti taškų</h4>
                     <p id="summary-desc" class="text-xs text-gray-400">Paskirstykite visus 3, 2, 1 taškus, kad galėtumėte pateikti balsą.</p>
+                    <div class="flex items-center gap-1.5 mt-2" id="summary-badges">
+                        <span id="sbadge-5" class="w-7 h-7 rounded-lg bg-amber-500 text-gray-950 font-black text-xs flex items-center justify-center transition-all shadow">5</span>
+                        <span id="sbadge-4" class="w-7 h-7 rounded-lg bg-brand-500 text-white font-black text-xs flex items-center justify-center transition-all shadow">4</span>
+                        <span id="sbadge-3" class="w-7 h-7 rounded-lg bg-brand-600 text-white font-black text-xs flex items-center justify-center transition-all shadow">3</span>
+                        <span id="sbadge-2" class="w-7 h-7 rounded-lg bg-sky-500 text-white font-black text-xs flex items-center justify-center transition-all shadow">2</span>
+                        <span id="sbadge-1" class="w-7 h-7 rounded-lg bg-sky-600 text-white font-black text-xs flex items-center justify-center transition-all shadow">1</span>
+                    </div>
                 </div>
             </div>
             <button type="submit" id="submit-votes-btn" disabled class="w-full sm:w-auto px-8 py-3 rounded-xl bg-gray-800 text-gray-500 font-bold text-xs uppercase tracking-wider transition-all duration-300 cursor-not-allowed flex items-center justify-center gap-2">
@@ -246,11 +250,24 @@
             const badge = document.getElementById(`badge-${pt}`);
             if (!badge) return;            if (usedPoints.includes(pt)) {
                 badge.className = "w-9 h-9 rounded-lg bg-gray-800 text-gray-600 font-bold text-sm flex items-center justify-center transition-all opacity-40 line-through scale-90";
-            } else {
-                if (pt === 5) badge.className = "w-9 h-9 rounded-lg bg-amber-500 text-gray-950 font-black text-sm flex items-center justify-center transition-all shadow-md scale-100";
+            } else {                if (pt === 5) badge.className = "w-9 h-9 rounded-lg bg-amber-500 text-gray-950 font-black text-sm flex items-center justify-center transition-all shadow-md scale-100";
                 else if (pt === 4) badge.className = "w-9 h-9 rounded-lg bg-brand-500 text-white font-black text-sm flex items-center justify-center transition-all shadow-md scale-100";
-                else if (pt === 3) badge.className = "w-9 h-9 rounded-lg bg-brand-600 text-white font-black text-sm flex items-center justify-center transition-all shadow-md scale-100";
-                else badge.className = "w-9 h-9 rounded-lg bg-gray-700 text-gray-200 font-black text-sm flex items-center justify-center transition-all shadow-md scale-100";
+                else if (pt === 3) badge.className = "w-9 h-9 rounded-lg bg-brand-600 text-white font-black text-sm flex items-center justify-center transition-all shadow-md scale-100";                else if (pt === 2) badge.className = "w-9 h-9 rounded-lg bg-sky-500 text-white font-black text-sm flex items-center justify-center transition-all shadow-md scale-100";
+                else badge.className = "w-9 h-9 rounded-lg bg-sky-600 text-white font-black text-sm flex items-center justify-center transition-all shadow-md scale-100";
+            }
+
+            // Apatinės juostos ženkleliai (mažesni)
+            const sbadge = document.getElementById(`sbadge-${pt}`);
+            if (sbadge) {
+                if (usedPoints.includes(pt)) {
+                    sbadge.className = "w-7 h-7 rounded-lg bg-gray-800 text-gray-600 font-bold text-xs flex items-center justify-center transition-all opacity-40 line-through scale-90";
+                } else {
+                    if (pt === 5) sbadge.className = "w-7 h-7 rounded-lg bg-amber-500 text-gray-950 font-black text-xs flex items-center justify-center transition-all shadow scale-100";
+                    else if (pt === 4) sbadge.className = "w-7 h-7 rounded-lg bg-brand-500 text-white font-black text-xs flex items-center justify-center transition-all shadow scale-100";
+                    else if (pt === 3) sbadge.className = "w-7 h-7 rounded-lg bg-brand-600 text-white font-black text-xs flex items-center justify-center transition-all shadow scale-100";
+                    else if (pt === 2) sbadge.className = "w-7 h-7 rounded-lg bg-sky-500 text-white font-black text-xs flex items-center justify-center transition-all shadow scale-100";
+                    else sbadge.className = "w-7 h-7 rounded-lg bg-sky-600 text-white font-black text-xs flex items-center justify-center transition-all shadow scale-100";
+                }
             }
         });
 
@@ -261,17 +278,17 @@
             const statusSpan = document.getElementById(`status-${songId}`);
             const btns = card.querySelectorAll('.pts-btn');            btns.forEach(btn => {
                 const btnPt = parseInt(btn.getAttribute('data-pts'));
-                if (currentPts === btnPt) {
-                    if (btnPt === 5) btn.className = "pts-btn w-10 h-10 rounded-xl font-black text-sm bg-amber-500 text-gray-950 border border-amber-400 point-btn-selected";
+                if (currentPts === btnPt) {                    if (btnPt === 5) btn.className = "pts-btn w-10 h-10 rounded-xl font-black text-sm bg-amber-500 text-gray-950 border border-amber-400 point-btn-selected";
                     else if (btnPt === 4) btn.className = "pts-btn w-10 h-10 rounded-xl font-black text-sm bg-brand-500 text-white border border-brand-400 point-btn-selected";
                     else if (btnPt === 3) btn.className = "pts-btn w-10 h-10 rounded-xl font-black text-sm bg-brand-600 text-white border border-brand-500 point-btn-selected";
-                    else btn.className = "pts-btn w-10 h-10 rounded-xl font-black text-sm bg-gray-600 text-white border border-gray-500 point-btn-selected";
+                    else if (btnPt === 2) btn.className = "pts-btn w-10 h-10 rounded-xl font-black text-sm bg-sky-500 text-white border border-sky-400 point-btn-selected";
+                    else btn.className = "pts-btn w-10 h-10 rounded-xl font-black text-sm bg-sky-600 text-white border border-sky-500 point-btn-selected";
                 } else {
-                    let hover;
-                    if (btnPt === 5) hover = 'hover:bg-amber-500 hover:text-gray-950';
+                    let hover;                    if (btnPt === 5) hover = 'hover:bg-amber-500 hover:text-gray-950';
                     else if (btnPt === 4) hover = 'hover:bg-brand-500 hover:text-white';
                     else if (btnPt === 3) hover = 'hover:bg-brand-600 hover:text-white';
-                    else hover = 'hover:bg-gray-600 hover:text-white';
+                    else if (btnPt === 2) hover = 'hover:bg-sky-500 hover:text-white';
+                    else hover = 'hover:bg-sky-600 hover:text-white';
                     btn.className = `pts-btn w-10 h-10 rounded-xl font-black text-sm border border-gray-700 bg-gray-800 text-gray-300 ${hover} transition-all`;
                 }
             });
