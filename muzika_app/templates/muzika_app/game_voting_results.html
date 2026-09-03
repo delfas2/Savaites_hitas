@@ -88,7 +88,7 @@
                     <i class="fa-solid fa-music text-amber-300 text-2xl"></i>
                     <h2 class="text-xl sm:text-2xl font-black text-white">Dalyvaujančios Dainos ir Gauti Balai</h2>
                 </div>
-                <p class="text-xs text-gray-400 mt-1">Kiekviena daina, ją pateikęs žmogus, gauti taškai ir balsavusių sąrašas</p>
+                <p class="text-xs text-gray-400 mt-1">Kiekviena daina, gauti taškai ir balsavusių sąrašas</p>
             </div>
             <div class="relative min-w-[260px]">
                 <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
@@ -102,9 +102,7 @@
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gray-800/80">
                     <div class="flex items-center space-x-4">
                         <span class="w-9 h-9 rounded-full font-black text-sm flex items-center justify-center shrink-0 border {% if item.rank == 1 %}bg-amber-400/20 text-amber-300 border-amber-500/40{% elif item.rank == 2 %}bg-slate-400/20 text-slate-200 border-slate-400/40{% elif item.rank == 3 %}bg-amber-700/20 text-amber-500 border-amber-700/40{% else %}bg-gray-800 text-gray-400 border-gray-700{% endif %}">{{ item.rank }}</span>
-                        <div>
-                            <h3 class="font-extrabold text-white text-lg leading-snug">{{ item.song.title }}</h3>
-                            <p class="text-[11px] text-brand-300 mt-1">Pateikė: <span class="font-semibold">{{ item.song.submitted_by.get_full_name|default:item.song.submitted_by.username }}</span></p>
+                        <div>                            <h3 class="font-extrabold text-white text-lg leading-snug">{{ item.song.title }}</h3>
                             <a href="{{ item.song.youtube_url }}" target="_blank" rel="noopener" class="text-[11px] text-red-400 hover:text-red-300 inline-flex items-center gap-1 mt-1">
                                 <i class="fa-brands fa-youtube"></i> Klausytis YouTube
                             </a>
@@ -157,9 +155,7 @@
             <table class="w-full text-left text-sm border-collapse">
                 <thead>
                     <tr class="bg-gray-900/90 text-gray-300 text-xs font-bold border-b border-gray-800">
-                        <th class="py-3 px-3 text-center">#</th>
-                        <th class="py-3 px-4">Daina</th>
-                        <th class="py-3 px-4 hidden md:table-cell">Pateikė</th>
+                        <th class="py-3 px-3 text-center">#</th>                        <th class="py-3 px-4">Daina</th>
                         <th class="py-3 px-4 text-right">Taškai</th>
                         <th class="py-3 px-3 text-center">Nuoroda</th>
                     </tr>
@@ -172,12 +168,8 @@
                             {% elif item.rank == 2 %}<span class="font-bold text-slate-300">2</span>
                             {% elif item.rank == 3 %}<span class="font-bold text-amber-500">3</span>
                             {% else %}<span class="font-bold text-gray-500">{{ item.rank }}</span>{% endif %}
-                        </td>
-                        <td class="py-4 px-4">
+                        </td>                        <td class="py-4 px-4">
                             <div class="font-bold text-white group-hover:text-brand-300 transition-colors">{{ item.song.title }}</div>
-                        </td>
-                        <td class="py-4 px-4 hidden md:table-cell">
-                            <span class="text-xs font-medium text-brand-300 bg-brand-500/10 px-2.5 py-1 rounded-lg border border-brand-500/20">{{ item.song.submitted_by.get_full_name|default:item.song.submitted_by.username }}</span>
                         </td>
                         <td class="py-4 px-4 text-right">
                             <div class="text-lg font-extrabold {% if item.rank == 1 %}text-amber-300{% else %}text-white{% endif %}">{{ item.total_points }}</div>
@@ -189,7 +181,7 @@
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="5" class="py-8 text-center text-gray-400 italic">Rezultatų nėra.</td></tr>
+                    <tr><td colspan="4" class="py-8 text-center text-gray-400 italic">Rezultatų nėra.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -233,10 +225,8 @@
                     {% for vote_info in votes %}
                     <div class="p-2.5 rounded-xl bg-gray-950 border {% if vote_info.points >= 4 %}border-amber-500/30{% elif vote_info.points == 3 %}border-brand-500/20{% else %}border-gray-800{% endif %} flex items-center justify-between">
                         <div class="flex items-center space-x-2.5 truncate">
-                            <span class="px-2 py-0.5 rounded font-black text-xs border shrink-0 {% if vote_info.points == 5 %}bg-amber-500/20 text-amber-300 border-amber-500/40{% elif vote_info.points == 4 %}bg-brand-500/20 text-brand-200 border-brand-500/40{% elif vote_info.points == 3 %}bg-purple-500/20 text-purple-300 border-purple-500/40{% elif vote_info.points == 2 %}bg-slate-500/20 text-slate-300 border-slate-500/40{% else %}bg-gray-800 text-gray-300 border-gray-700{% endif %}">{{ vote_info.points }} tšk.</span>
-                            <span class="text-xs font-bold text-white truncate">{{ vote_info.song.title }}</span>
+                            <span class="px-2 py-0.5 rounded font-black text-xs border shrink-0 {% if vote_info.points == 5 %}bg-amber-500/20 text-amber-300 border-amber-500/40{% elif vote_info.points == 4 %}bg-brand-500/20 text-brand-200 border-brand-500/40{% elif vote_info.points == 3 %}bg-purple-500/20 text-purple-300 border-purple-500/40{% elif vote_info.points == 2 %}bg-slate-500/20 text-slate-300 border-slate-500/40{% else %}bg-gray-800 text-gray-300 border-gray-700{% endif %}">{{ vote_info.points }} tšk.</span>                            <span class="text-xs font-bold text-white truncate">{{ vote_info.song.title }}</span>
                         </div>
-                        <span class="text-[10px] text-gray-400 shrink-0 hidden sm:inline">{{ vote_info.song.submitted_by.get_full_name|default:vote_info.song.submitted_by.username }}</span>
                     </div>
                     {% endfor %}
                 </div>
@@ -264,7 +254,7 @@
             <table class="w-full text-xs text-left border-collapse">
                 <thead>
                     <tr class="bg-gray-900/90 text-gray-300 font-bold border-b border-gray-800">
-                        <th class="p-3 whitespace-nowrap">Daina (pateikėjas)</th>
+                        <th class="p-3 whitespace-nowrap">Daina</th>
                         {% for voter in voters_list %}
                         <th class="p-3 text-center whitespace-nowrap">{{ voter.get_full_name|default:voter.username }}</th>
                         {% endfor %}
@@ -275,14 +265,11 @@
                     {% for row in matrix_rows %}
                     <tr class="hover:bg-gray-800/30 transition-colors">
                         <td class="p-3 font-bold text-white whitespace-nowrap">
-                            <span class="w-2 h-2 rounded-full inline-block mr-1.5 {% if row.rank == 1 %}bg-amber-400{% elif row.rank == 2 %}bg-slate-400{% elif row.rank == 3 %}bg-amber-600{% else %}bg-gray-600{% endif %}"></span>
-                            {{ row.song.title }}
-                            <span class="text-[10px] text-gray-400 font-normal">({{ row.song.submitted_by.get_full_name|default:row.song.submitted_by.username }})</span>
+                            <span class="w-2 h-2 rounded-full inline-block mr-1.5 {% if row.rank == 1 %}bg-amber-400{% elif row.rank == 2 %}bg-slate-400{% elif row.rank == 3 %}bg-amber-600{% else %}bg-gray-600{% endif %}"></span>                            {{ row.song.title }}
                         </td>
                         {% for cell in row.cells %}
-                        <td class="p-3 text-center">
-                            {% if cell.is_own %}
-                                <span class="text-gray-600 italic">— sava</span>
+                        <td class="p-3 text-center">                            {% if cell.is_own %}
+                                <span class="text-gray-700">·</span>
                             {% elif cell.points %}
                                 <span class="font-bold {% if cell.points == 5 %}text-amber-300{% elif cell.points == 4 %}text-brand-300{% elif cell.points == 3 %}text-purple-300{% elif cell.points == 2 %}text-slate-300{% else %}text-gray-400{% endif %}">{{ cell.points }} tšk.</span>
                             {% else %}

@@ -149,11 +149,12 @@
                         <a href="{% url 'vote_game' group_code=group.code game_id=active_game.id %}" class="px-6 py-3 rounded-xl bg-white text-gray-900 font-bold text-xs hover:bg-gray-100 transition shadow-xl hover:scale-105 active:scale-95 flex items-center gap-2 justify-center">
                             <i class="fa-solid fa-check-to-slot text-brand-600"></i> Balsuoti Už Dainas
                         </a>
-                    {% endif %}
-                {% endif %}
+                    {% endif %}                {% endif %}
+                {% if active_phase != 'voting' %}
                 <a href="{% url 'game_details' group_code=group.code game_id=active_game.id %}" class="px-6 py-3 rounded-xl glass-card text-white font-semibold text-xs hover:bg-gray-800/80 transition border border-gray-700 flex items-center gap-2 justify-center">
                     <i class="fa-solid fa-eye text-brand-500"></i> Peržiūrėti Detales
                 </a>
+                {% endif %}
             </div>
         </div>
     </div>
