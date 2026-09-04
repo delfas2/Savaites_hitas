@@ -9,16 +9,7 @@
         <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
             GRUPĖS VALDYMAS
         </span>
-        <h1 class="text-2xl lg:text-3xl font-black text-white mt-2">Grupė „{{ group.name }}“</h1>
-        <p class="text-xs text-gray-400">Valdykite narius, žaidimus ir grupės nustatymus</p>
-    </div>
-    <div class="flex flex-wrap items-center gap-2">
-        <a href="{% url 'group_games_list' group_code=group.code %}" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs transition shadow flex items-center gap-1.5">
-            <i class="fa-solid fa-gamepad"></i> Žaidimai
-        </a>
-        <a href="{% url 'group_statistics' group_code=group.code %}" class="px-4 py-2 rounded-xl bg-brand-neon hover:brightness-110 text-white font-bold text-xs transition shadow flex items-center gap-1.5">
-            <i class="fa-solid fa-trophy"></i> Statistika
-        </a>
+        <h1 class="text-2xl lg:text-3xl font-black text-white mt-2">Grupė „{{ group.name }}“</h1>        <p class="text-xs text-gray-400">Valdykite narius, žaidimus ir grupės nustatymus</p>
     </div>
 </div>
 
