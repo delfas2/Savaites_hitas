@@ -168,12 +168,12 @@
 {# --- MODALAS: KURTI ŽAIDIMĄ --- #}
 {% if game_form %}
 <div id="gameModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-200 p-4">
-    <div class="glass-panel rounded-3xl p-6 lg:p-8 max-w-lg w-full border border-gray-800 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-        <button type="button" onclick="closeGameModal()" class="absolute top-5 right-5 text-gray-400 hover:text-white">
+    <div class="glass-panel rounded-3xl p-6 lg:p-8 {% if past_games %}max-w-4xl{% else %}max-w-lg{% endif %} w-full border border-gray-800 shadow-2xl relative max-h-[90vh]">
+        <button type="button" onclick="closeGameModal()" class="absolute top-5 right-5 text-gray-400 hover:text-white z-10">
             <i class="fa-solid fa-xmark text-lg"></i>
         </button>
 
-        <div class="flex items-center gap-3 mb-4">
+        <div class="flex items-center gap-3 mb-5">
             <div class="w-9 h-9 rounded-xl bg-brand-pink/20 text-brand-pink flex items-center justify-center">
                 <i class="fa-solid fa-trophy"></i>
             </div>
@@ -183,33 +183,61 @@
             </div>
         </div>
 
-        <form action="{% url 'create_game' group_code=group.code %}" method="POST" class="space-y-3">
-            {% csrf_token %}            <div>
-                <label for="{{ game_form.name.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ game_form.name.label }}</label>
-                {{ game_form.name }}
+        <div class="grid grid-cols-1 {% if past_games %}md:grid-cols-2{% endif %} gap-6">
+            {# --- KAIRĖ: FORMA --- #}
+            <form action="{% url 'create_game' group_code=group.code %}" method="POST" class="space-y-3">
+                {% csrf_token %}
+                <div>
+                    <label for="{{ game_form.name.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ game_form.name.label }}</label>
+                    {{ game_form.name }}
+                </div>
+                <div>
+                    <label for="{{ game_form.description.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ game_form.description.label }}</label>
+                    {{ game_form.description }}
+                </div>
+                <div>
+                    <label for="{{ game_form.submission_start_date.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ game_form.submission_start_date.label }}</label>
+                    {{ game_form.submission_start_date }}
+                </div>
+                <div>
+                    <label for="{{ game_form.submission_end_date.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ game_form.submission_end_date.label }}</label>
+                    {{ game_form.submission_end_date }}
+                    <p class="mt-1 text-[10px] text-gray-500">Balsavimas prasidės iškart po dainų kėlimo pabaigos.</p>
+                </div>
+                <div>
+                    <label for="{{ game_form.voting_end_date.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ game_form.voting_end_date.label }}</label>
+                    {{ game_form.voting_end_date }}
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeGameModal()" class="px-4 py-2 rounded-xl bg-gray-800 text-gray-300 text-xs font-bold hover:bg-gray-700 transition">Atšaukti</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand-pink hover:brightness-110 text-white text-xs font-bold shadow-lg transition">Pradėti Žaidimą</button>
+                </div>
+            </form>
+
+            {# --- DEŠINĖ: BUVUSIOS TEMOS --- #}
+            {% if past_games %}
+            <div class="flex flex-col min-h-0 border-t md:border-t-0 md:border-l border-gray-800 pt-4 md:pt-0 md:pl-6">
+                <div class="flex items-center gap-2 mb-3 shrink-0">
+                    <i class="fa-solid fa-clock-rotate-left text-brand-pink"></i>
+                    <h4 class="text-sm font-bold text-white">Buvusios temos</h4>
+                </div>
+                <p class="text-[10px] text-gray-500 mb-3 shrink-0">Patikrinkite, kad nesukurtumėte jau buvusios temos.</p>
+                <div class="overflow-y-auto space-y-1.5 pr-1 max-h-[55vh]">
+                    {% for name, description, created_at in past_games %}
+                    <div class="px-3 py-2 rounded-lg bg-gray-900/60 border border-gray-800">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs font-bold text-white truncate">{{ name }}</span>
+                            <span class="text-[10px] text-gray-500 shrink-0">{{ created_at|date:"Y-m-d" }}</span>
+                        </div>
+                        {% if description %}<p class="text-[10px] text-gray-400 mt-0.5 line-clamp-2">{{ description }}</p>{% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-[11px] text-gray-500 italic px-1 py-2">Buvusių temų nėra.</p>
+                    {% endfor %}
+                </div>
             </div>
-            <div>
-                <label for="{{ game_form.description.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ game_form.description.label }}</label>
-                {{ game_form.description }}
-            </div>
-            <div>
-                <label for="{{ game_form.submission_start_date.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ game_form.submission_start_date.label }}</label>
-                {{ game_form.submission_start_date }}
-            </div>
-            <div>
-                <label for="{{ game_form.submission_end_date.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ game_form.submission_end_date.label }}</label>
-                {{ game_form.submission_end_date }}
-                <p class="mt-1 text-[10px] text-gray-500">Balsavimas prasidės iškart po dainų kėlimo pabaigos.</p>
-            </div>
-            <div>
-                <label for="{{ game_form.voting_end_date.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ game_form.voting_end_date.label }}</label>
-                {{ game_form.voting_end_date }}
-            </div>
-            <div class="pt-2 flex justify-end gap-2">
-                <button type="button" onclick="closeGameModal()" class="px-4 py-2 rounded-xl bg-gray-800 text-gray-300 text-xs font-bold hover:bg-gray-700 transition">Atšaukti</button>
-                <button type="submit" class="px-5 py-2 rounded-xl bg-brand-pink hover:brightness-110 text-white text-xs font-bold shadow-lg transition">Pradėti Žaidimą</button>
-            </div>
-        </form>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endif %}
@@ -230,10 +258,16 @@
     function openGameModal() {
         const m = document.getElementById('gameModal');
         if (m) m.classList.remove('opacity-0', 'pointer-events-none');
-    }
-    function closeGameModal() {
+    }    function closeGameModal() {
         const m = document.getElementById('gameModal');
         if (m) m.classList.add('opacity-0', 'pointer-events-none');
+    }
+    function togglePastThemes() {
+        const list = document.getElementById('pastThemesList');
+        const chevron = document.getElementById('pastThemesChevron');
+        if (!list) return;
+        list.classList.toggle('hidden');
+        if (chevron) chevron.classList.toggle('rotate-180');
     }
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeGameModal(); });
 </script>

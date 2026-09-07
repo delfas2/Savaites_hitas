@@ -387,10 +387,10 @@
             line-height: 1rem !important;
             padding: 0.625rem 1rem !important; /* px-4 py-2.5 */
             height: auto !important;
-        }
-        /* Pats kalendorius – kompaktiškesnis */
+        }        /* Pats kalendorius – kompaktiškesnis */
         .flatpickr-calendar {
             font-size: 0.8rem;
+            z-index: 99999 !important; /* virš modalų (z-50) */
         }
     </style>
 </head>
@@ -722,8 +722,7 @@
     {# Flatpickr inicializavimas visiems .js-datetime laukams (24 val. formatas) #}
     <script>
       function initFlatpickr() {
-          if (typeof flatpickr === 'undefined') return;
-          document.querySelectorAll('.js-datetime').forEach(function(el) {
+          if (typeof flatpickr === 'undefined') return;          document.querySelectorAll('.js-datetime').forEach(function(el) {
               if (el._flatpickr) return; // jau inicializuota
               flatpickr(el, {
                   enableTime: true,
@@ -731,7 +730,7 @@
                   dateFormat: 'Y-m-d H:i',
                   minuteIncrement: 5,
                   allowInput: true,
-                  static: true,
+                  static: false,
                   locale: (flatpickr.l10ns && flatpickr.l10ns.lt) ? flatpickr.l10ns.lt : 'default'
               });
           });

@@ -175,12 +175,13 @@ def group_admin_view(request, group_code):
     song_form = None
     if active_game and active_phase == 'submission' and is_member:
         user_song = Song.objects.filter(game=active_game, submitted_by=request.user).first()
-        song_form = SongForm(instance=user_song) if user_song else SongForm()
-
-    # --- Žaidimo kūrimo modalui (kai vartotojas yra paskutinio žaidimo laimėtojas) ---
+        song_form = SongForm(instance=user_song) if user_song else SongForm()    # --- Žaidimo kūrimo modalui (kai vartotojas yra paskutinio žaidimo laimėtojas) ---
     game_form = None
+    past_games = None
     if last_completed_game and request.user in winners and (group.can_create_games or request.user.is_superuser):
         game_form = GameForm()
+        # Buvusios temos, kad kūrėjas nesukurtų tos pačios
+        past_games = Game.objects.filter(group=group).order_by('-created_at').values_list('name', 'description', 'created_at')
 
     context = {
         'group': group,
@@ -195,6 +196,7 @@ def group_admin_view(request, group_code):
         'user_song': user_song,
         'song_form': song_form,
         'game_form': game_form,
+        'past_games': past_games,
     }
     return render(request, 'muzika_app/group_admin.html', context)
 
@@ -615,9 +617,9 @@ def group_games_list_view(request, group_code):
     context = {
         'group': group,
         'games': games_list,
-        'is_current_user_admin': is_current_user_admin,
-        'game_form': GameForm() if can_create_game else None,
+        'is_current_user_admin': is_current_user_admin,        'game_form': GameForm() if can_create_game else None,
         'can_create_game': can_create_game,
+        'past_games': Game.objects.filter(group=group).order_by('-created_at').values_list('name', 'description', 'created_at') if can_create_game else None,
     }
     return render(request, 'muzika_app/group_games_list.html', context)
 
