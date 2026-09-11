@@ -423,14 +423,15 @@
                     <i class="fa-solid fa-compact-disc mr-1.5"></i>Mano Dainos
                 </a>                <a href="{% url 'all_songs' %}" class="nav-link px-4 py-2 rounded-full text-xs font-medium text-gray-400 hover:text-white transition {% if request.resolver_match.url_name == 'all_songs' %}active{% endif %}">
                     <i class="fa-solid fa-headphones mr-1.5"></i>Visos Dainos
-                </a>
-                {% if group %}
-                <a href="{% url 'group_games_list' group_code=group.code %}" class="nav-link px-4 py-2 rounded-full text-xs font-medium text-gray-400 hover:text-white transition {% if request.resolver_match.url_name == 'group_games_list' %}active{% endif %}">
+                </a>                {% if group or nav_group %}
+                {% with g=group|default:nav_group %}
+                <a href="{% url 'group_games_list' group_code=g.code %}" class="nav-link px-4 py-2 rounded-full text-xs font-medium text-gray-400 hover:text-white transition {% if request.resolver_match.url_name == 'group_games_list' %}active{% endif %}">
                     <i class="fa-solid fa-gamepad mr-1.5"></i>Žaidimai
                 </a>
-                <a href="{% url 'group_statistics' group_code=group.code %}" class="nav-link px-4 py-2 rounded-full text-xs font-medium text-gray-400 hover:text-white transition {% if request.resolver_match.url_name == 'group_statistics' %}active{% endif %}">
+                <a href="{% url 'group_statistics' group_code=g.code %}" class="nav-link px-4 py-2 rounded-full text-xs font-medium text-gray-400 hover:text-white transition {% if request.resolver_match.url_name == 'group_statistics' %}active{% endif %}">
                     <i class="fa-solid fa-trophy mr-1.5"></i>Statistika
                 </a>
+                {% endwith %}
                 {% endif %}
                 {% if user.is_superuser %}
                 <a href="{% url 'all_groups_list' %}" class="nav-link px-4 py-2 rounded-full text-xs font-medium text-gray-400 hover:text-white transition {% if request.resolver_match.url_name == 'all_groups_list' %}active{% endif %}">
@@ -490,10 +491,11 @@
         <div class="flex lg:hidden overflow-x-auto gap-2 pt-3 pb-1 border-t border-gray-800/40 mt-2">
             <a href="{% url 'home' %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'home' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Pradžia</a>
             <a href="{% url 'my_groups' %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'my_groups' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Mano Grupės</a>
-            <a href="{% url 'my_songs' %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'my_songs' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Mano Dainos</a>            <a href="{% url 'all_songs' %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'all_songs' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Visos Dainos</a>
-            {% if group %}
-            <a href="{% url 'group_games_list' group_code=group.code %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'group_games_list' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Žaidimai</a>
-            <a href="{% url 'group_statistics' group_code=group.code %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'group_statistics' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Statistika</a>
+            <a href="{% url 'my_songs' %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'my_songs' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Mano Dainos</a>            <a href="{% url 'all_songs' %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'all_songs' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Visos Dainos</a>            {% if group or nav_group %}
+            {% with g=group|default:nav_group %}
+            <a href="{% url 'group_games_list' group_code=g.code %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'group_games_list' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Žaidimai</a>
+            <a href="{% url 'group_statistics' group_code=g.code %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'group_statistics' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Statistika</a>
+            {% endwith %}
             {% endif %}
             {% if user.is_superuser %}
             <a href="{% url 'all_groups_list' %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap {% if request.resolver_match.url_name == 'all_groups_list' %}bg-brand-600 text-white{% else %}bg-gray-900 text-gray-300 border border-gray-800{% endif %}">Visos Grupės</a>

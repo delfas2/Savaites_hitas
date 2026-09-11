@@ -171,7 +171,7 @@ class SongForm(forms.ModelForm):
     class Meta:
         model = Song
         # Nurodome laukus, kuriuos pildys vartotojas
-        fields = ['title', 'youtube_url']
+        fields = ['title', 'youtube_url', 'comment']
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'mt-1 block w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500 placeholder-gray-500',
@@ -181,10 +181,16 @@ class SongForm(forms.ModelForm):
                  'class': 'mt-1 block w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500 placeholder-gray-500',
                  'placeholder': 'Nukopijuokite pilną YouTube nuorodą čia (pvz., https://www.youtube.com/watch?v=...)'
             }),
+            'comment': forms.Textarea(attrs={
+                'rows': 3,
+                'class': 'mt-1 block w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500 placeholder-gray-500',
+                'placeholder': 'Nebūtina: parašykite ką nors apie dainą (bus matoma tik rezultatuose)'
+            }),
         }
         labels = {
             'title': 'Dainos pavadinimas',
             'youtube_url': 'YouTube nuoroda',
+            'comment': 'Komentaras (nebūtina)',
         }
 
     # Papildoma validacija YouTube nuorodai (paprastas pavyzdys)

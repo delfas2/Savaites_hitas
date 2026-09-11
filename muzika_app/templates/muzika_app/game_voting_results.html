@@ -101,18 +101,29 @@
             <div class="song-breakdown-item p-5 rounded-2xl bg-gray-900/90 border {% if item.rank == 1 %}border-amber-500/40{% elif item.rank == 2 %}border-slate-400/40{% elif item.rank == 3 %}border-amber-700/40{% else %}border-gray-800{% endif %} transition-all shadow-xl">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gray-800/80">
                     <div class="flex items-center space-x-4">
-                        <span class="w-9 h-9 rounded-full font-black text-sm flex items-center justify-center shrink-0 border {% if item.rank == 1 %}bg-amber-400/20 text-amber-300 border-amber-500/40{% elif item.rank == 2 %}bg-slate-400/20 text-slate-200 border-slate-400/40{% elif item.rank == 3 %}bg-amber-700/20 text-amber-500 border-amber-700/40{% else %}bg-gray-800 text-gray-400 border-gray-700{% endif %}">{{ item.rank }}</span>
-                        <div>                            <h3 class="font-extrabold text-white text-lg leading-snug">{{ item.song.title }}</h3>
-                            <a href="{{ item.song.youtube_url }}" target="_blank" rel="noopener" class="text-[11px] text-red-400 hover:text-red-300 inline-flex items-center gap-1 mt-1">
-                                <i class="fa-brands fa-youtube"></i> Klausytis YouTube
-                            </a>
+                        <span class="w-9 h-9 rounded-full font-black text-sm flex items-center justify-center shrink-0 border {% if item.rank == 1 %}bg-amber-400/20 text-amber-300 border-amber-500/40{% elif item.rank == 2 %}bg-slate-400/20 text-slate-200 border-slate-400/40{% elif item.rank == 3 %}bg-amber-700/20 text-amber-500 border-amber-700/40{% else %}bg-gray-800 text-gray-400 border-gray-700{% endif %}">{{ item.rank }}</span>                        <div>                            <h3 class="font-extrabold text-white text-lg leading-snug">{{ item.song.title }}</h3>
+                            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                                <span class="text-[11px] text-gray-400 inline-flex items-center gap-1">
+                                    <i class="fa-solid fa-user text-brand-400"></i> Įkėlė: <span class="font-semibold text-gray-300">{{ item.song.submitted_by.get_full_name|default:item.song.submitted_by.username }}</span>
+                                </span>
+                                <a href="{{ item.song.youtube_url }}" target="_blank" rel="noopener" class="text-[11px] text-red-400 hover:text-red-300 inline-flex items-center gap-1">
+                                    <i class="fa-brands fa-youtube"></i> Klausytis YouTube
+                                </a>
+                            </div>
                         </div>
-                    </div>
-                    <div class="text-right shrink-0">
+                    </div>                    <div class="text-right shrink-0">
                         <div class="text-2xl font-black {% if item.rank == 1 %}text-amber-300{% elif item.rank == 2 %}text-slate-200{% elif item.rank == 3 %}text-amber-500{% else %}text-white{% endif %}">{{ item.total_points }} tšk.</div>
                         <div class="text-[10px] text-gray-400 font-medium">Iš viso gauta taškų</div>
                     </div>
                 </div>
+                {% if item.song.comment %}
+                <div class="mt-4 p-3.5 rounded-xl bg-brand-500/5 border border-brand-500/20">
+                    <div class="text-[10px] font-bold text-brand-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                        <i class="fa-solid fa-comment-dots"></i> Pateikėjo komentaras
+                    </div>
+                    <p class="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">{{ item.song.comment }}</p>
+                </div>
+                {% endif %}
                 <div class="mt-4">
                     <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">
                         <i class="fa-solid fa-users text-brand-400 mr-1.5"></i> Balsavę žmonės ir skirti taškai ({{ item.voters|length }}):
@@ -154,8 +165,8 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm border-collapse">
                 <thead>
-                    <tr class="bg-gray-900/90 text-gray-300 text-xs font-bold border-b border-gray-800">
-                        <th class="py-3 px-3 text-center">#</th>                        <th class="py-3 px-4">Daina</th>
+                    <tr class="bg-gray-900/90 text-gray-300 text-xs font-bold border-b border-gray-800">                        <th class="py-3 px-3 text-center">#</th>                        <th class="py-3 px-4">Daina</th>
+                        <th class="py-3 px-4">Pateikė</th>
                         <th class="py-3 px-4 text-right">Taškai</th>
                         <th class="py-3 px-3 text-center">Nuoroda</th>
                     </tr>
@@ -171,6 +182,11 @@
                         </td>                        <td class="py-4 px-4">
                             <div class="font-bold text-white group-hover:text-brand-300 transition-colors">{{ item.song.title }}</div>
                         </td>
+                        <td class="py-4 px-4">
+                            <span class="text-xs text-gray-300 inline-flex items-center gap-1.5">
+                                <i class="fa-solid fa-user text-brand-400 text-[10px]"></i> {{ item.song.submitted_by.get_full_name|default:item.song.submitted_by.username }}
+                            </span>
+                        </td>
                         <td class="py-4 px-4 text-right">
                             <div class="text-lg font-extrabold {% if item.rank == 1 %}text-amber-300{% else %}text-white{% endif %}">{{ item.total_points }}</div>
                         </td>
@@ -181,7 +197,7 @@
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="4" class="py-8 text-center text-gray-400 italic">Rezultatų nėra.</td></tr>
+                    <tr><td colspan="5" class="py-8 text-center text-gray-400 italic">Rezultatų nėra.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -225,7 +241,7 @@
                     {% for vote_info in votes %}
                     <div class="p-2.5 rounded-xl bg-gray-950 border {% if vote_info.points >= 4 %}border-amber-500/30{% elif vote_info.points == 3 %}border-brand-500/20{% else %}border-gray-800{% endif %} flex items-center justify-between">
                         <div class="flex items-center space-x-2.5 truncate">
-                            <span class="px-2 py-0.5 rounded font-black text-xs border shrink-0 {% if vote_info.points == 5 %}bg-amber-500/20 text-amber-300 border-amber-500/40{% elif vote_info.points == 4 %}bg-brand-500/20 text-brand-200 border-brand-500/40{% elif vote_info.points == 3 %}bg-purple-500/20 text-purple-300 border-purple-500/40{% elif vote_info.points == 2 %}bg-slate-500/20 text-slate-300 border-slate-500/40{% else %}bg-gray-800 text-gray-300 border-gray-700{% endif %}">{{ vote_info.points }} tšk.</span>                            <span class="text-xs font-bold text-white truncate">{{ vote_info.song.title }}</span>
+                            <span class="px-2 py-0.5 rounded font-black text-xs border shrink-0 {% if vote_info.points == 5 %}bg-amber-500/20 text-amber-300 border-amber-500/40{% elif vote_info.points == 4 %}bg-brand-500/20 text-brand-200 border-brand-500/40{% elif vote_info.points == 3 %}bg-purple-500/20 text-purple-300 border-purple-500/40{% elif vote_info.points == 2 %}bg-slate-500/20 text-slate-300 border-slate-500/40{% else %}bg-gray-800 text-gray-300 border-gray-700{% endif %}">{{ vote_info.points }} tšk.</span>                            <span class="text-xs font-bold text-white truncate">{{ vote_info.song.title }}<span class="text-gray-500 font-normal"> · {{ vote_info.song.submitted_by.get_full_name|default:vote_info.song.submitted_by.username }}</span></span>
                         </div>
                     </div>
                     {% endfor %}
@@ -263,9 +279,9 @@
                 </thead>
                 <tbody class="divide-y divide-gray-800/60">
                     {% for row in matrix_rows %}
-                    <tr class="hover:bg-gray-800/30 transition-colors">
-                        <td class="p-3 font-bold text-white whitespace-nowrap">
+                    <tr class="hover:bg-gray-800/30 transition-colors">                        <td class="p-3 font-bold text-white whitespace-nowrap">
                             <span class="w-2 h-2 rounded-full inline-block mr-1.5 {% if row.rank == 1 %}bg-amber-400{% elif row.rank == 2 %}bg-slate-400{% elif row.rank == 3 %}bg-amber-600{% else %}bg-gray-600{% endif %}"></span>                            {{ row.song.title }}
+                            <span class="text-gray-500 font-normal">({{ row.song.submitted_by.get_full_name|default:row.song.submitted_by.username }})</span>
                         </td>
                         {% for cell in row.cells %}
                         <td class="p-3 text-center">                            {% if cell.is_own %}

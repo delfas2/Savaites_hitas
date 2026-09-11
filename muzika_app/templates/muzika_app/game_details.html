@@ -4,145 +4,170 @@
 {% block title %}Žaidimo Detalės: {{ game.name }}{% endblock %}
 
 {% block content %}
-<h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">
-    Žaidimo Detalės: <span class="font-normal">{{ game.name }}</span>
-</h1>
-<p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
-    Grupė: <a href="{% url 'group_admin' group_code=group.code %}" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ group.name }}</a>
-</p>
+{# --- ANTRAŠTĖ --- #}
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div>
+        <a href="{% url 'group_admin' group_code=group.code %}" class="text-xs text-gray-400 hover:text-white hover:underline inline-flex items-center gap-1.5 mb-1">
+            <i class="fa-solid fa-arrow-left text-[10px]"></i> {{ group.name }}
+        </a>
+        <span class="px-3 py-1 rounded-full bg-brand-500/20 text-brand-100 text-[10px] font-bold border border-brand-500/40 uppercase tracking-wider ml-1">
+            Žaidimo detalės
+        </span>
+        <h1 class="text-2xl lg:text-3xl font-black text-white mt-2">{{ game.name }}</h1>
+    </div>
+    <a href="{% url 'group_games_list' group_code=group.code %}" class="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-white text-xs font-bold border border-gray-700 transition flex items-center gap-1.5 w-max">
+        <i class="fa-solid fa-list"></i> Visi žaidimai
+    </a>
+</div>
 
-{# Rodyti pranešimus #}
+{# Pranešimai #}
 {% if messages %}
-    <div class="mb-6">
+    <div class="mb-6 space-y-2">
         {% for message in messages %}
-             <div class="p-3 rounded-md {% if message.tags == 'success' %} bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 {% elif message.tags == 'error' %} bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 {% elif message.tags == 'warning' %} bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-200 {% else %} bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 {% endif %}" role="alert">
+            <div class="p-3 rounded-xl text-xs font-medium border {% if message.tags == 'success' %} bg-emerald-500/10 text-emerald-300 border-emerald-500/30 {% elif message.tags == 'error' %} bg-red-500/10 text-red-300 border-red-500/30 {% elif message.tags == 'warning' %} bg-amber-500/10 text-amber-300 border-amber-500/30 {% else %} bg-brand-500/10 text-brand-100 border-brand-500/30 {% endif %}" role="alert">
                 {{ message }}
             </div>
         {% endfor %}
     </div>
 {% endif %}
 
-{# --- Žaidimo Informacijos Blokas --- #}
-<div class="mb-6 p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
-    <h2 class="text-xl font-semibold text-gray-700 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-600 pb-2">Žaidimo informacija</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-        <div>
-            <p class="font-medium text-gray-500 dark:text-gray-400">Pavadinimas</p>
-            <p class="text-gray-900 dark:text-gray-100">{{ game.name }}</p>
+{# --- ŽAIDIMO INFORMACIJA --- #}
+<div class="glass-card rounded-3xl p-6 sm:p-8 mb-8 border border-gray-800">
+    <div class="flex items-center gap-2 mb-6">
+        <i class="fa-solid fa-circle-info text-brand-400 text-xl"></i>
+        <h2 class="text-lg sm:text-xl font-black text-white">Žaidimo informacija</h2>
+    </div>
+
+    {% if game.description %}
+    <div class="mb-6 p-4 rounded-2xl bg-gray-900/70 border border-gray-800">
+        <p class="text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-1.5">Aprašymas / tema</p>
+        <p class="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">{{ game.description }}</p>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="p-4 rounded-2xl bg-gray-900/70 border border-gray-800">
+            <p class="text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-1">Pavadinimas</p>
+            <p class="text-sm font-bold text-white">{{ game.name }}</p>
         </div>
-        <div>
-            <p class="font-medium text-gray-500 dark:text-gray-400">Sukurtas</p>
-            <p class="text-gray-900 dark:text-gray-100">{{ game.created_at|date:"Y-m-d H:i" }} {% if game.creator %}({{ game.creator.username }}){% endif %}</p>
+        <div class="p-4 rounded-2xl bg-gray-900/70 border border-gray-800">
+            <p class="text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-1">Sukurtas</p>
+            <p class="text-sm font-bold text-white">{{ game.created_at|date:"Y-m-d H:i" }}{% if game.creator %} <span class="text-gray-400 font-normal">· {{ game.creator.get_full_name|default:game.creator.username }}</span>{% endif %}</p>
         </div>
-         <div>
-            <p class="font-medium text-gray-500 dark:text-gray-400">Dainų kėlimas</p>
-            <p class="text-gray-900 dark:text-gray-100">
+        <div class="p-4 rounded-2xl bg-gray-900/70 border border-gray-800">
+            <p class="text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-1 flex items-center gap-1.5">
+                <i class="fa-solid fa-cloud-arrow-up text-emerald-400"></i> Dainų kėlimas
+            </p>
+            <p class="text-sm text-gray-200">
                 {% if game.submission_start_date and game.submission_end_date %}
-                    Nuo {{ game.submission_start_date|date:"Y-m-d H:i" }}<br>
-                    Iki {{ game.submission_end_date|date:"Y-m-d H:i" }}
+                    <span class="text-gray-400">Nuo</span> {{ game.submission_start_date|date:"Y-m-d H:i" }}<br>
+                    <span class="text-gray-400">Iki</span> {{ game.submission_end_date|date:"Y-m-d H:i" }}
                 {% else %}
-                    <span class="italic text-gray-400 dark:text-gray-500">Nenustatytas</span>
+                    <span class="italic text-gray-500">Nenustatytas</span>
                 {% endif %}
             </p>
         </div>
-        <div>
-            <p class="font-medium text-gray-500 dark:text-gray-400">Balsavimas</p>
-            <p class="text-gray-900 dark:text-gray-100">
+        <div class="p-4 rounded-2xl bg-gray-900/70 border border-gray-800">
+            <p class="text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-1 flex items-center gap-1.5">
+                <i class="fa-solid fa-check-to-slot text-brand-pink"></i> Balsavimas
+            </p>
+            <p class="text-sm text-gray-200">
                 {% if game.voting_start_date and game.voting_end_date %}
-                     Nuo {{ game.voting_start_date|date:"Y-m-d H:i" }}<br>
-                     Iki {{ game.voting_end_date|date:"Y-m-d H:i" }}
+                    <span class="text-gray-400">Nuo</span> {{ game.voting_start_date|date:"Y-m-d H:i" }}<br>
+                    <span class="text-gray-400">Iki</span> {{ game.voting_end_date|date:"Y-m-d H:i" }}
                 {% else %}
-                     <span class="italic text-gray-400 dark:text-gray-500">Nenustatytas</span>
+                    <span class="italic text-gray-500">Nenustatytas</span>
                 {% endif %}
             </p>
         </div>
     </div>
-     {# Mygtukai veiksmams #}
-    <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-600 flex flex-wrap gap-3">
-         <a href="{% url 'group_games_list' group_code=group.code %}" class="text-sm inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-500 rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-600">
-             <i data-lucide="arrow-left" class="w-3 h-3 mr-1"></i> Visi žaidimai
-         </a>
-         {% if is_current_user_admin %}
-             <a href="{% url 'edit_game' group_code=group.code game_id=game.id %}" class="text-sm inline-flex items-center px-3 py-1 bg-yellow-600 text-white rounded-md shadow-sm hover:bg-yellow-700">
-                 <i data-lucide="edit-3" class="w-3 h-3 mr-1"></i> Redaguoti žaidimą
-             </a>
-         {% endif %}
-         {# Mygtukas eiti balsuoti, jei balsavimas aktyvus #}
-         {% if game.is_voting_active %}
-            <a href="{% url 'vote_game' group_code=group.code game_id=game.id %}" class="text-sm inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700">
-                 <i data-lucide="vote" class="w-3 h-3 mr-1"></i> Eiti balsuoti
-             </a>
-         {% endif %}
-         {% if is_current_user_admin and game.is_voting_finished and not game.winners.exists %}
+
+    {# Mygtukai veiksmams #}
+    <div class="mt-6 pt-5 border-t border-gray-800 flex flex-wrap gap-2.5">
+        {% if is_current_user_admin %}
+            <a href="{% url 'edit_game' group_code=group.code game_id=game.id %}" class="px-4 py-2 rounded-xl bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 text-xs font-bold transition inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-pen-to-square"></i> Redaguoti žaidimą
+            </a>
+        {% endif %}
+        {% if game.is_voting_active %}
+            <a href="{% url 'vote_game' group_code=group.code game_id=game.id %}" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-lg transition inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-check-to-slot"></i> Eiti balsuoti
+            </a>
+        {% endif %}
+        {% if game.winners.exists %}
+            <a href="{% url 'game_voting_results' group_code=group.code game_id=game.id %}" class="px-4 py-2 rounded-xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 text-xs font-bold transition inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-trophy"></i> Peržiūrėti rezultatus
+            </a>
+        {% endif %}
+        {% if is_current_user_admin and game.is_voting_finished and not game.winners.exists %}
             <form action="{% url 'calculate_game_results' group_code=group.code game_id=game.id %}" method="POST" class="inline-block">
-                 {% csrf_token %}
-                 <button type="submit" class="text-sm inline-flex items-center px-3 py-1 bg-cyan-600 text-white rounded-md shadow-sm hover:bg-cyan-700" onclick="return confirm('Ar tikrai norite apskaičiuoti rezultatus ir paskelbti laimėtoją? Šis veiksmas įrašys laimėtojus į duomenų bazę.');">
-                    <i data-lucide="calculator" class="w-3 h-3 mr-1"></i> Apskaičiuoti Rezultatus
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 rounded-xl bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/25 text-xs font-bold transition inline-flex items-center gap-1.5" onclick="return confirm('Ar tikrai norite apskaičiuoti rezultatus ir paskelbti laimėtoją? Šis veiksmas įrašys laimėtojus į duomenų bazę.');">
+                    <i class="fa-solid fa-calculator"></i> Apskaičiuoti rezultatus
                 </button>
             </form>
-         {% endif %}
+        {% endif %}
     </div>
 </div>
 
 
-{# --- Dalyvių Statuso Blokas --- #}
-<div class="p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
-    <h2 class="text-xl font-semibold text-gray-700 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-600 pb-2">Dalyvių statusas</h2>
-
-    {# <<< LEGENDA PAŠALINTA >>> #}
+{# --- DALYVIŲ STATUSAS --- #}
+<div class="glass-card rounded-3xl p-6 sm:p-8 border border-gray-800">
+    <div class="flex items-center gap-2 mb-6">
+        <i class="fa-solid fa-users text-brand-400 text-xl"></i>
+        <h2 class="text-lg sm:text-xl font-black text-white">Dalyvių statusas</h2>
+    </div>
 
     {% if participants_status %}
-        <ul class="space-y-2"> {# Šiek tiek padidintas tarpas tarp eilučių #}
+        <div class="space-y-2.5">
             {% for participant in participants_status %}
-                <li class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600">
-                    {# Kairė pusė: Rolė ir Vardas #}
-                    <div class="flex items-center mb-2 sm:mb-0 mr-4 min-w-0">
-                        {% if participant.is_admin %}
-                         <i data-lucide="shield-check" class="flex-shrink-0 w-4 h-4 mr-2 text-indigo-500 dark:text-indigo-400" title="Administratorius"></i>
-                        {% else %}
-                         <i data-lucide="user" class="flex-shrink-0 w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" title="Narys"></i>
-                        {% endif %}
-                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" title="{{ participant.user.get_full_name|default:participant.user.username }}">
-                            {{ participant.user.get_full_name|default:participant.user.username }}
-                        </span>
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3.5 rounded-2xl bg-gray-900/70 border border-gray-800 hover:border-gray-700 transition">
+                    {# Kairė: rolė + vardas #}
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-brand-600 to-brand-pink flex items-center justify-center font-bold text-white text-[11px] shrink-0 uppercase">
+                            {{ participant.user.get_full_name|default:participant.user.username|slice:":2" }}
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-bold text-white truncate">{{ participant.user.get_full_name|default:participant.user.username }}</p>
+                            <p class="text-[10px] font-medium {% if participant.is_admin %}text-brand-300{% else %}text-gray-500{% endif %} flex items-center gap-1">
+                                {% if participant.is_admin %}<i class="fa-solid fa-shield-halved"></i> Administratorius{% else %}<i class="fa-solid fa-user"></i> Narys{% endif %}
+                            </p>
+                        </div>
                     </div>
 
-                    {# Dešinė pusė: Statuso ikonos ir tekstas #}
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1 text-xs flex-shrink-0"> {# Naudojam flex ir gap #}
-
-                        {# Dainos pateikimo statusas su tekstu #}
+                    {# Dešinė: statuso ženkleliai #}
+                    <div class="flex flex-wrap items-center gap-2 shrink-0">
                         {% if participant.has_submitted %}
-                             <span class="inline-flex items-center text-green-600 dark:text-green-400">
-                                <i data-lucide="upload-cloud" class="w-3 h-3 mr-1"></i> Įkėlė
-                             </span>
+                            <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 inline-flex items-center gap-1.5">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Įkėlė
+                            </span>
                         {% else %}
-                             <span class="inline-flex items-center text-yellow-600 dark:text-yellow-400">
-                               <i data-lucide="minus-circle" class="w-3 h-3 mr-1"></i> Neįkėlė
-                             </span>
+                            <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 inline-flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-minus"></i> Neįkėlė
+                            </span>
                         {% endif %}
 
-                        {# Balsavimo statusas su tekstu (rodomas tik jei balsavimas prasidėjęs) #}
                         {% if game.voting_start_date %}
-                             {% if participant.has_voted %}
-                                <span class="inline-flex items-center text-blue-600 dark:text-blue-400">
-                                  <i data-lucide="check-square" class="w-3 h-3 mr-1"></i> Balsavo
+                            {% if participant.has_voted %}
+                                <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-brand-500/15 text-brand-200 border border-brand-500/30 inline-flex items-center gap-1.5">
+                                    <i class="fa-solid fa-square-check"></i> Balsavo
                                 </span>
-                             {% else %}
-                                 <span class="inline-flex items-center text-red-600 dark:text-red-400">
-                                    <i data-lucide="square" class="w-3 h-3 mr-1"></i> Nebalsavo
-                                 </span>
+                            {% else %}
+                                <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-red-500/15 text-red-300 border border-red-500/30 inline-flex items-center gap-1.5">
+                                    <i class="fa-regular fa-square"></i> Nebalsavo
+                                </span>
                             {% endif %}
                         {% else %}
-                            <span class="inline-flex items-center text-gray-500 dark:text-gray-400 italic">
-                               <i data-lucide="clock-3" class="w-3 h-3 mr-1"></i> Balsavimas neprasidėjo
+                            <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-gray-800 text-gray-400 border border-gray-700 inline-flex items-center gap-1.5 italic">
+                                <i class="fa-regular fa-clock"></i> Balsavimas neprasidėjo
                             </span>
                         {% endif %}
                     </div>
-                </li>
+                </div>
             {% endfor %}
-        </ul>
+        </div>
     {% else %}
-        <p class="text-sm text-gray-500 dark:text-gray-400">Grupėje nėra narių.</p>
+        <p class="text-sm text-gray-400 italic">Grupėje nėra narių.</p>
     {% endif %}
 </div>
 
@@ -151,7 +176,6 @@
 {% block scripts %}
 {{ block.super }}
 <script>
-    // Inicializuoti ikonas
     document.addEventListener('DOMContentLoaded', () => {
          if (typeof lucide !== 'undefined') {
              lucide.createIcons();

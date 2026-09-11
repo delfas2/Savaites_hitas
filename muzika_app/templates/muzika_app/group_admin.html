@@ -9,7 +9,15 @@
         <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
             GRUPĖS VALDYMAS
         </span>
-        <h1 class="text-2xl lg:text-3xl font-black text-white mt-2">Grupė „{{ group.name }}“</h1>        <p class="text-xs text-gray-400">Valdykite narius, žaidimus ir grupės nustatymus</p>
+        <div class="flex items-center gap-3 mt-2">
+            <h1 class="text-2xl lg:text-3xl font-black text-white">Grupė „{{ group.name }}“</h1>
+            {% if user.is_superuser %}
+            <button type="button" onclick="openEditGroupModal()" title="Koreguoti grupės pavadinimą" class="w-8 h-8 rounded-lg bg-gray-800 hover:bg-brand-600 text-gray-300 hover:text-white border border-gray-700 transition flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-pen text-xs"></i>
+            </button>
+            {% endif %}
+        </div>
+        <p class="text-xs text-gray-400">Valdykite narius, žaidimus ir grupės nustatymus</p>
     </div>
 </div>
 
@@ -236,57 +244,56 @@
     <div class="flex items-center justify-between mb-4 border-b border-gray-800 pb-3">
         <h3 class="text-base font-bold text-white">Grupės Nariai</h3>
         <span class="text-xs text-gray-400">Viso: <strong class="text-white">{{ memberships|length }}</strong></span>
-    </div>
-    <div class="overflow-x-auto">
+    </div>    <div class="space-y-2.5">
         {% if memberships %}
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="text-[10px] font-bold text-gray-400 uppercase border-b border-gray-800">
-                        <th class="pb-3 pr-2">Vardas Pavardė</th>
-                        <th class="pb-3 pr-2">El. Paštas</th>
-                        <th class="pb-3 pr-2">Rolė</th>
-                        {% if is_current_user_admin %}
-                            <th class="pb-3 text-right">Keisti Rolę</th>
+            {% for membership in memberships %}
+                <div class="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-4 p-3.5 rounded-2xl bg-gray-900/60 border border-gray-800 hover:border-gray-700 transition">
+                    {# Vartotojas #}
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                        <span class="w-9 h-9 rounded-full bg-gradient-to-tr from-brand-600 to-brand-pink flex items-center justify-center text-white text-[11px] font-bold uppercase shrink-0">{{ membership.user.get_full_name|default:membership.user.username|slice:":1" }}</span>
+                        <div class="min-w-0">
+                            <p class="text-sm font-bold text-white truncate">{{ membership.user.get_full_name|default:membership.user.username }}</p>
+                            <p class="text-[11px] text-gray-500 truncate">{{ membership.user.email }}</p>
+                        </div>
+                    </div>
+
+                    {# Rolės ženklelis #}
+                    <div class="shrink-0">
+                        {% if membership.role == 'ADMIN' %}
+                            <span class="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold">{{ membership.get_role_display }}</span>
+                        {% else %}
+                            <span class="px-2.5 py-1 rounded-full bg-gray-800 text-gray-300 text-[10px] font-bold">{{ membership.get_role_display }}</span>
                         {% endif %}
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-800/60 text-xs">
-                    {% for membership in memberships %}
-                        <tr class="hover:bg-brand-500/5 transition">
-                            <td class="py-3 pr-2 font-semibold text-white">
-                                <span class="inline-flex items-center gap-2">
-                                    <span class="w-7 h-7 rounded-full bg-gradient-to-tr from-brand-600 to-brand-pink flex items-center justify-center text-white text-[10px] font-bold uppercase">{{ membership.user.get_full_name|default:membership.user.username|slice:":1" }}</span>
-                                    {{ membership.user.get_full_name|default:membership.user.username }}
-                                </span>
-                            </td>
-                            <td class="py-3 pr-2 text-gray-400">{{ membership.user.email }}</td>
-                            <td class="py-3 pr-2">
-                                {% if membership.role == 'ADMIN' %}
-                                    <span class="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold">{{ membership.get_role_display }}</span>
-                                {% else %}
-                                    <span class="px-2.5 py-1 rounded-full bg-gray-800 text-gray-300 text-[10px] font-bold">{{ membership.get_role_display }}</span>
-                                {% endif %}
-                            </td>
-                            {% if is_current_user_admin %}
-                            <td class="py-3 text-right">
-                                {% if membership.user != request.user or admin_count > 1 %}
-                                    <form action="{% url 'change_member_role' group_code=group.code member_id=membership.user.id %}" method="POST" class="inline-flex items-center gap-2 justify-end">
-                                        {% csrf_token %}
-                                        <select name="role" class="text-xs !w-auto !py-1">
-                                            <option value="ADMIN" {% if membership.role == 'ADMIN' %}selected{% endif %}>Administratorius</option>
-                                            <option value="MEMBER" {% if membership.role == 'MEMBER' %}selected{% endif %}>Narys</option>
-                                        </select>
-                                        <button type="submit" class="text-xs px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-bold whitespace-nowrap transition">Keisti</button>
-                                    </form>
-                                {% else %}
-                                    <span class="text-xs text-gray-500 italic">Negalima keisti</span>
-                                {% endif %}
-                            </td>
-                            {% endif %}
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </div>
+
+                    {# Veiksmai #}
+                    {% if is_current_user_admin %}
+                    <div class="flex items-center gap-2 lg:justify-end shrink-0">
+                        {% if membership.user != request.user or admin_count > 1 %}
+                            <form action="{% url 'change_member_role' group_code=group.code member_id=membership.user.id %}" method="POST" class="inline-flex items-center gap-2">
+                                {% csrf_token %}
+                                <select name="role" class="text-xs !w-auto !py-1.5">
+                                    <option value="ADMIN" {% if membership.role == 'ADMIN' %}selected{% endif %}>Administratorius</option>
+                                    <option value="MEMBER" {% if membership.role == 'MEMBER' %}selected{% endif %}>Narys</option>
+                                </select>
+                                <button type="submit" class="text-xs px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-bold whitespace-nowrap transition">Keisti</button>
+                            </form>
+                        {% else %}
+                            <span class="text-xs text-gray-500 italic whitespace-nowrap">Negalima keisti</span>
+                        {% endif %}
+                        {% if membership.user != request.user %}
+                            <form action="{% url 'remove_member' group_code=group.code member_id=membership.user.id %}" method="POST" class="inline-flex"
+                                  onsubmit="return confirm('Ar tikrai norite pašalinti šį narį iš grupės? Šio veiksmo atšaukti negalėsite.');">
+                                {% csrf_token %}
+                                <button type="submit" title="Pašalinti narį" class="text-xs w-8 h-8 rounded-lg bg-red-500/15 text-red-300 border border-red-500/30 hover:bg-red-500/25 transition inline-flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-user-xmark"></i>
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
         {% else %}
             <p class="text-gray-400 py-4 text-sm">Šioje grupėje narių kol kas nėra.</p>
         {% endif %}
@@ -325,11 +332,16 @@
                 <label for="{{ song_form.title.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ song_form.title.label }}</label>
                 {{ song_form.title }}
                 {% if song_form.title.errors %}<p class="mt-1 text-xs text-red-400">{{ song_form.title.errors|striptags }}</p>{% endif %}
-            </div>
-            <div>
+            </div>            <div>
                 <label for="{{ song_form.youtube_url.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ song_form.youtube_url.label }}</label>
                 {{ song_form.youtube_url }}
                 {% if song_form.youtube_url.errors %}<p class="mt-1 text-xs text-red-400">{{ song_form.youtube_url.errors|striptags }}</p>{% endif %}
+            </div>
+            <div>
+                <label for="{{ song_form.comment.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ song_form.comment.label }}</label>
+                {{ song_form.comment }}
+                <p class="mt-1 text-[10px] text-gray-500">Šis komentaras bus matomas tik paskelbus rezultatus – balsuojant jo niekas nematys.</p>
+                {% if song_form.comment.errors %}<p class="mt-1 text-xs text-red-400">{{ song_form.comment.errors|striptags }}</p>{% endif %}
             </div>
             <div class="pt-2 flex justify-end gap-2">
                 <button type="button" onclick="closeSongModal()" class="px-4 py-2 rounded-xl bg-gray-800 text-gray-300 text-xs font-bold hover:bg-gray-700 transition">Atšaukti</button>
@@ -421,6 +433,39 @@
 {% endif %}
 
 
+{# --- MODALAS: KOREGUOTI GRUPĖS PAVADINIMĄ (tik supervartotojui) --- #}
+{% if user.is_superuser %}
+<div id="editGroupModal" class="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-200">
+    <div class="glass-panel relative w-full max-w-md rounded-2xl border border-gray-700 shadow-2xl p-6">
+        <button type="button" onclick="closeEditGroupModal()" class="absolute top-5 right-5 text-gray-400 hover:text-white">
+            <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+        <div class="flex items-center gap-2 mb-4">
+            <i class="fa-solid fa-pen-to-square text-brand-pink"></i>
+            <h3 class="text-base font-black text-white">Koreguoti grupę</h3>
+        </div>
+        <form action="{% url 'edit_group' group_code=group.code %}" method="POST" class="space-y-3">
+            {% csrf_token %}
+            <div>
+                <label for="edit-group-name" class="block text-[11px] font-semibold text-gray-300 mb-1">Grupės pavadinimas</label>
+                <input type="text" id="edit-group-name" name="name" value="{{ group.name }}" maxlength="150" required
+                       class="mt-1 block w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500 placeholder-gray-500">
+            </div>
+            <div>
+                <label for="edit-group-info" class="block text-[11px] font-semibold text-gray-300 mb-1">Papildoma informacija (nebūtina)</label>
+                <textarea id="edit-group-info" name="information" rows="3"
+                          class="mt-1 block w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500 placeholder-gray-500">{{ group.information }}</textarea>
+            </div>
+            <div class="pt-2 flex justify-end gap-2">
+                <button type="button" onclick="closeEditGroupModal()" class="px-4 py-2 rounded-xl bg-gray-800 text-gray-300 text-xs font-bold hover:bg-gray-700 transition">Atšaukti</button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-lg transition">Išsaugoti</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+
 {# Script blokas ikonoms #}
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -491,12 +536,32 @@
     }
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') closeGameModal();
-    });
-    document.addEventListener('DOMContentLoaded', function() {
+    });    document.addEventListener('DOMContentLoaded', function() {
         const gm = document.getElementById('gameModal');
         if (gm) {
             gm.addEventListener('click', function(e) {
                 if (e.target === gm) closeGameModal();
+            });
+        }
+    });
+
+    // --- Grupės redagavimo modalo valdymas ---
+    function openEditGroupModal() {
+        const m = document.getElementById('editGroupModal');
+        if (m) m.classList.remove('opacity-0', 'pointer-events-none');
+    }
+    function closeEditGroupModal() {
+        const m = document.getElementById('editGroupModal');
+        if (m) m.classList.add('opacity-0', 'pointer-events-none');
+    }
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeEditGroupModal();
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+        const egm = document.getElementById('editGroupModal');
+        if (egm) {
+            egm.addEventListener('click', function(e) {
+                if (e.target === egm) closeEditGroupModal();
             });
         }
     });

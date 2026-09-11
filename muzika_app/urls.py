@@ -4,9 +4,10 @@ from . import views
 urlpatterns = [
     path("", views.landing_or_home_view, name="home"),
     path("grupe/kurti/", views.create_group_page, name="create_group_page"),
-    path("grupe/saugoti/", views.save_group, name="save_group"),
-    path("grupe/<str:group_code>/admin/", views.group_admin_view, name="group_admin"),
+    path("grupe/saugoti/", views.save_group, name="save_group"),    path("grupe/<str:group_code>/admin/", views.group_admin_view, name="group_admin"),
     path('grupe/<str:group_code>/change_role/<int:member_id>/', views.change_member_role, name='change_member_role'),
+    path('grupe/<str:group_code>/pasalinti-nari/<int:member_id>/', views.remove_member, name='remove_member'),
+    path('grupe/<str:group_code>/redaguoti/', views.edit_group_view, name='edit_group'),
     path("accounts/signup/", views.signup_view, name="signup"),
     path("mano-grupes/", views.my_groups_view, name="my_groups"),
     path("mano-dainos/", views.my_songs_view, name="my_songs"),

@@ -169,8 +169,7 @@ class Song(models.Model):
         AUTH_USER_MODEL,
         on_delete=models.CASCADE, # Ištrynus vartotoją, ištrinamos ir jo keltos dainos (?)
                                   # Galima keisti į SET_NULL, jei norite palikti dainas
-        related_name='submitted_songs',
-        verbose_name="Įkėlė"
+        related_name='submitted_songs',        verbose_name="Įkėlė"
     )
     title = models.CharField(
         max_length=200,
@@ -179,6 +178,12 @@ class Song(models.Model):
     youtube_url = models.URLField(
         max_length=255,
         verbose_name="YouTube nuoroda"
+    )
+    comment = models.TextField(
+        blank=True,
+        default="",
+        verbose_name="Komentaras",
+        help_text="Nebūtinas komentaras apie dainą (matomas tik rezultatuose)."
     )
     submitted_at = models.DateTimeField(
         auto_now_add=True,

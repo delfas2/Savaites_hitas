@@ -231,6 +231,62 @@ def change_member_role(request, group_code, member_id):
     return redirect('group_admin', group_code=group.code)
 
 
+@login_required
+@require_POST
+def remove_member(request, group_code, member_id):
+    """ Pašalina narį iš grupės. Leidžiama grupės adminui arba supervartotojui. """
+    group = get_object_or_404(Group, code=group_code)
+    is_allowed = request.user.is_superuser or Membership.objects.filter(
+        group=group, user=request.user, role=Membership.Role.ADMIN
+    ).exists()
+    if not is_allowed:
+        messages.error(request, 'Neturite teisės šalinti narių iš šios grupės.')
+        return redirect('group_admin', group_code=group.code)
+
+    membership_to_remove = get_object_or_404(Membership, group=group, user__id=member_id)
+
+    # Negalima pašalinti savęs
+    if membership_to_remove.user == request.user:
+        messages.error(request, 'Negalite pašalinti savęs iš grupės.')
+        return redirect('group_admin', group_code=group.code)
+
+    # Negalima pašalinti paskutinio administratoriaus
+    if membership_to_remove.role == Membership.Role.ADMIN:
+        admin_count = Membership.objects.filter(group=group, role=Membership.Role.ADMIN).count()
+        if admin_count <= 1:
+            messages.error(request, 'Negalima pašalinti paskutinio administratoriaus.')
+            return redirect('group_admin', group_code=group.code)
+
+    removed_username = membership_to_remove.user.get_full_name() or membership_to_remove.user.username
+    membership_to_remove.delete()
+    messages.success(request, f'Narys „{removed_username}" pašalintas iš grupės.')
+    return redirect('group_admin', group_code=group.code)
+
+
+@login_required
+@require_POST
+def edit_group_view(request, group_code):
+    """ Leidžia supervartotojui koreguoti grupės pavadinimą (ir informaciją). """
+    group = get_object_or_404(Group, code=group_code)
+
+    if not request.user.is_superuser:
+        messages.error(request, 'Tik supervartotojas gali koreguoti grupės pavadinimą.')
+        return redirect('group_admin', group_code=group.code)
+
+    new_name = (request.POST.get('name') or '').strip()
+    new_information = (request.POST.get('information') or '').strip()
+
+    if not new_name:
+        messages.error(request, 'Grupės pavadinimas negali būti tuščias.')
+        return redirect('group_admin', group_code=group.code)
+
+    group.name = new_name
+    group.information = new_information
+    group.save(update_fields=['name', 'information'])
+    messages.success(request, f'Grupės duomenys atnaujinti. Naujas pavadinimas: „{group.name}".')
+    return redirect('group_admin', group_code=group.code)
+
+
 def signup_view(request):
     """ Tvarko vartotojo registraciją. """
     if request.method == 'POST':
