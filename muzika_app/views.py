@@ -168,14 +168,19 @@ def group_admin_view(request, group_code):
 
         if latest_finished_game:
             last_completed_game = latest_finished_game
-            winners = list(latest_finished_game.winners.all()) # Gaunam laimėtojus iš M2M
-
-    # --- Dainos kėlimo/redagavimo modalui (tik kėlimo fazėje) ---
+            winners = list(latest_finished_game.winners.all()) # Gaunam laimėtojus iš M2M    # --- Dainos kėlimo/redagavimo modalui (tik kėlimo fazėje) ---
     user_song = None
     song_form = None
+    submitted_songs = None
     if active_game and active_phase == 'submission' and is_member:
         user_song = Song.objects.filter(game=active_game, submitted_by=request.user).first()
-        song_form = SongForm(instance=user_song) if user_song else SongForm()    # --- Žaidimo kūrimo modalui (kai vartotojas yra paskutinio žaidimo laimėtojas) ---
+        song_form = SongForm(instance=user_song) if user_song else SongForm()
+        # Jau įkeltos dainos į šį konkursą (kad nariai nesikartotų su tomis pačiomis)
+        submitted_songs = list(
+            Song.objects.filter(game=active_game).order_by('title')
+        )
+
+    # --- Žaidimo kūrimo modalui (kai vartotojas yra paskutinio žaidimo laimėtojas) ---
     game_form = None
     past_games = None
     if last_completed_game and request.user in winners and (group.can_create_games or request.user.is_superuser):
@@ -190,11 +195,10 @@ def group_admin_view(request, group_code):
         'admin_count': admin_count,
         'active_game': active_game,
         'active_phase': active_phase,
-        'all_voted': all_voted,
-        'last_completed_game': last_completed_game,
-        'winners': winners,
-        'user_song': user_song,
+        'all_voted': all_voted,        'last_completed_game': last_completed_game,
+        'winners': winners,        'user_song': user_song,
         'song_form': song_form,
+        'submitted_songs': submitted_songs,
         'game_form': game_form,
         'past_games': past_games,
     }

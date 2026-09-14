@@ -311,8 +311,8 @@
 
 {# --- MODALAS: SIŪLYTI / REDAGUOTI DAINĄ --- #}
 {% if active_game and active_phase == 'submission' and song_form %}
-<div id="songModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-200">
-    <div class="glass-panel rounded-3xl p-6 lg:p-8 max-w-md w-full mx-4 border border-gray-800 shadow-2xl relative">
+<div id="songModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-200 p-4">
+    <div class="glass-panel rounded-3xl p-6 lg:p-8 {% if submitted_songs %}max-w-3xl{% else %}max-w-md{% endif %} w-full mx-4 border border-gray-800 shadow-2xl relative max-h-[90vh]">
         <button type="button" onclick="closeSongModal()" class="absolute top-5 right-5 text-gray-400 hover:text-white">
             <i class="fa-solid fa-xmark text-lg"></i>
         </button>
@@ -325,31 +325,65 @@
                 <h3 class="text-lg font-bold text-white">{% if user_song %}Redaguoti Dainą{% else %}Siūlyti Dainą Konkursui{% endif %}</h3>
                 <p class="text-[11px] text-gray-400">Žaidimas: {{ active_game.name }}</p>
             </div>
-        </div>        <form action="{% if user_song %}{% url 'edit_song' group_code=group.code game_id=active_game.id song_id=user_song.id %}{% else %}{% url 'add_song' group_code=group.code game_id=active_game.id %}{% endif %}" method="POST" class="space-y-3">
-            {% csrf_token %}
-            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <div>
-                <label for="{{ song_form.title.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ song_form.title.label }}</label>
-                {{ song_form.title }}
-                {% if song_form.title.errors %}<p class="mt-1 text-xs text-red-400">{{ song_form.title.errors|striptags }}</p>{% endif %}
-            </div>            <div>
-                <label for="{{ song_form.youtube_url.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ song_form.youtube_url.label }}</label>
-                {{ song_form.youtube_url }}
-                {% if song_form.youtube_url.errors %}<p class="mt-1 text-xs text-red-400">{{ song_form.youtube_url.errors|striptags }}</p>{% endif %}
+        </div>
+
+        <div class="grid grid-cols-1 {% if submitted_songs %}md:grid-cols-2{% endif %} gap-6">
+            {# --- KAIRĖ: FORMA --- #}
+            <form action="{% if user_song %}{% url 'edit_song' group_code=group.code game_id=active_game.id song_id=user_song.id %}{% else %}{% url 'add_song' group_code=group.code game_id=active_game.id %}{% endif %}" method="POST" class="space-y-3">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <div>
+                    <label for="{{ song_form.title.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ song_form.title.label }}</label>
+                    {{ song_form.title }}
+                    {% if song_form.title.errors %}<p class="mt-1 text-xs text-red-400">{{ song_form.title.errors|striptags }}</p>{% endif %}
+                </div>
+                <div>
+                    <label for="{{ song_form.youtube_url.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ song_form.youtube_url.label }}</label>
+                    {{ song_form.youtube_url }}
+                    {% if song_form.youtube_url.errors %}<p class="mt-1 text-xs text-red-400">{{ song_form.youtube_url.errors|striptags }}</p>{% endif %}
+                </div>
+                <div>
+                    <label for="{{ song_form.comment.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ song_form.comment.label }}</label>
+                    {{ song_form.comment }}
+                    <p class="mt-1 text-[10px] text-gray-500">Šis komentaras bus matomas tik paskelbus rezultatus – balsuojant jo niekas nematys.</p>
+                    {% if song_form.comment.errors %}<p class="mt-1 text-xs text-red-400">{{ song_form.comment.errors|striptags }}</p>{% endif %}
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeSongModal()" class="px-4 py-2 rounded-xl bg-gray-800 text-gray-300 text-xs font-bold hover:bg-gray-700 transition">Atšaukti</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-lg transition">
+                        {% if user_song %}Išsaugoti Pakeitimus{% else %}Pateikti Dainą{% endif %}
+                    </button>
+                </div>
+            </form>
+
+            {# --- DEŠINĖ: JAU ĮKELTOS DAINOS --- #}
+            {% if submitted_songs %}
+            <div class="flex flex-col min-h-0 border-t md:border-t-0 md:border-l border-gray-800 pt-4 md:pt-0 md:pl-6">
+                <div class="flex items-center gap-2 mb-3 shrink-0">
+                    <i class="fa-solid fa-list-check text-brand-500"></i>
+                    <h4 class="text-sm font-bold text-white">Jau įkeltos dainos ({{ submitted_songs|length }})</h4>
+                </div>
+                <p class="text-[10px] text-gray-500 mb-3 shrink-0">Kad nesikartotų – patikrinkite, ar tokios dainos dar nėra sąraše.</p>
+                <div class="overflow-y-auto space-y-1.5 pr-1 max-h-[55vh]">
+                    {% for s in submitted_songs %}
+                    <div class="px-3 py-2 rounded-lg bg-gray-900/60 border border-gray-800">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-music text-[10px] text-gray-500 shrink-0"></i>
+                            <span class="text-xs font-bold text-white truncate">{{ s.title }}</span>
+                        </div>
+                        {% if s.youtube_url %}
+                        <a href="{{ s.youtube_url }}" target="_blank" rel="noopener" class="text-[10px] text-brand-400 hover:text-brand-300 hover:underline truncate block mt-0.5">
+                            <i class="fa-brands fa-youtube"></i> {{ s.youtube_url }}
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-[11px] text-gray-500 italic px-1 py-2">Kol kas dainų nėra.</p>
+                    {% endfor %}
+                </div>
             </div>
-            <div>
-                <label for="{{ song_form.comment.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ song_form.comment.label }}</label>
-                {{ song_form.comment }}
-                <p class="mt-1 text-[10px] text-gray-500">Šis komentaras bus matomas tik paskelbus rezultatus – balsuojant jo niekas nematys.</p>
-                {% if song_form.comment.errors %}<p class="mt-1 text-xs text-red-400">{{ song_form.comment.errors|striptags }}</p>{% endif %}
-            </div>
-            <div class="pt-2 flex justify-end gap-2">
-                <button type="button" onclick="closeSongModal()" class="px-4 py-2 rounded-xl bg-gray-800 text-gray-300 text-xs font-bold hover:bg-gray-700 transition">Atšaukti</button>
-                <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-lg transition">
-                    {% if user_song %}Išsaugoti Pakeitimus{% else %}Pateikti Dainą{% endif %}
-                </button>
-            </div>
-        </form>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endif %}
