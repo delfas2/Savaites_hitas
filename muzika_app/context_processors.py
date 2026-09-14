@@ -8,7 +8,7 @@ def nav_group(request):
     Grąžina `nav_group` – grupės objektą arba None.
     """
     if not request.user.is_authenticated:
-        return {}
+        return {'nav_group': None}
 
     group = None
 
