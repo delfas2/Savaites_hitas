@@ -398,8 +398,7 @@ def all_songs_view(request):
     Rodo visas kada nors įkeltas dainas, suskirstytas pagal žaidimus
     (kaip grojaraščius/playlistus). Rodomos tik tų grupių, kuriose
     vartotojas yra narys, dainos. Vartotojas gali pasirinkti vieną ar
-    kelis grojaraščius ir tiesiog klausytis dainų.
-    """    # Grupės, kuriose vartotojas dalyvauja.
+    kelis grojaraščius ir tiesiog klausytis dainų.    """    # Grupės, kuriose vartotojas dalyvauja.
     # Superuser mato visų grupių dainas (visą istoriją).
     if request.user.is_superuser:
         games_qs = Game.objects.all()
@@ -408,6 +407,14 @@ def all_songs_view(request):
             user=request.user
         ).values_list('group_id', flat=True)
         games_qs = Game.objects.filter(group_id__in=user_group_ids)
+
+    # Konkurso grojaraštis atsiranda tik PASIBAIGUS konkursui –
+    # t.y. kai balsavimas jau baigėsi ARBA jau paskelbti laimėtojai.
+    now = timezone.now()
+    games_qs = games_qs.filter(
+        models.Q(voting_end_date__isnull=False, voting_end_date__lte=now) |
+        models.Q(winners__isnull=False)
+    ).distinct()
 
     games = (
         games_qs
