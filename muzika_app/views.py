@@ -746,6 +746,11 @@ def game_voting_results_view(request, group_code, game_id):
         messages.warning(request, "Balsavimas šiam žaidimui dar nebuvo pradėtas.")
         return redirect('game_details', group_code=group.code, game_id=game.id)
 
+    # Rezultatai matomi tik pasibaigus balsavimui (arba jau paskelbus laimėtojus).
+    if not (game.is_voting_finished() or game.winners.exists()):
+        messages.warning(request, "Detalūs rezultatai bus matomi tik pasibaigus balsavimui.")
+        return redirect('game_details', group_code=group.code, game_id=game.id)
+
     all_votes = Vote.objects.filter(game=game).select_related(
         'voter', 'song', 'song__submitted_by'
     ).order_by('voter__username', '-points')

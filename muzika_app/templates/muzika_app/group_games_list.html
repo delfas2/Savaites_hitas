@@ -110,13 +110,11 @@
                 {% endif %}
 
                 {# Detalės #}
-                <a href="{% url 'game_details' group_code=group.code game_id=game.id %}" title="Peržiūrėti detales" class="w-9 h-9 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 flex items-center justify-center transition"><i data-lucide="eye" class="w-4 h-4"></i></a>
-
-                {# Balsavimo rezultatai #}
-                {% if game.voting_start_date %}
+                <a href="{% url 'game_details' group_code=group.code game_id=game.id %}" title="Peržiūrėti detales" class="w-9 h-9 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 flex items-center justify-center transition"><i data-lucide="eye" class="w-4 h-4"></i></a>                {# Balsavimo rezultatai #}
+                {% if game.is_voting_finished or game.winners.exists %}
                     <a href="{% url 'game_voting_results' group_code=group.code game_id=game.id %}" title="Detali balsavimo ataskaita" class="w-9 h-9 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 flex items-center justify-center transition"><i data-lucide="list-checks" class="w-4 h-4"></i></a>
                 {% else %}
-                    <button type="button" disabled title="Balsavimas dar neprasidėjo" class="w-9 h-9 rounded-lg bg-gray-800 text-gray-600 border border-gray-700 flex items-center justify-center cursor-not-allowed"><i data-lucide="list-checks" class="w-4 h-4"></i></button>
+                    <button type="button" disabled title="Rezultatai bus matomi pasibaigus balsavimui" class="w-9 h-9 rounded-lg bg-gray-800 text-gray-600 border border-gray-700 flex items-center justify-center cursor-not-allowed"><i data-lucide="list-checks" class="w-4 h-4"></i></button>
                 {% endif %}
             </div>
         </div>
