@@ -1269,11 +1269,12 @@ def statistics_view(request, group_code):
     participation_ranking.sort(key=lambda x: x['games_participated'], reverse=True)
 
     # =====================================================================
-    # KOMANDOS AKTYVUMAS PER SAVAITĘ (paskutinės 30 savaičių)
-    # =====================================================================    # Grupuojam žaidimus pagal balsavimo pabaigos ISO savaitę
+    # KOMANDOS AKTYVUMAS PER SAVAITĘ (paskutinės 30 savaičių)    # =====================================================================
+    # Grupuojam žaidimus pagal SUKŪRIMO datos ISO savaitę
     activity_by_week = defaultdict(set)  # (year, week) -> set(user_id)
     for g in completed_games:
-        iso = g.voting_end_date.isocalendar()
+        # Savaitė nustatoma pagal žaidimo SUKŪRIMO datą
+        iso = timezone.localtime(g.created_at).isocalendar()
         key = (iso[0], iso[1])
         activity_by_week[key] |= participation_by_game.get(g.id, set())
 
