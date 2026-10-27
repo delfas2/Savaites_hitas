@@ -112,11 +112,10 @@
                             <span class="font-mono font-bold text-white text-sm countdown" data-deadline="{{ active_game.voting_end_date|date:'c' }}">–</span>
                         </div>
                     </div>
-                    <div class="bg-gray-900/80 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-gray-800 flex items-center gap-3">
-                        <i class="fa-solid fa-music text-brand-pink text-base"></i>
+                    <div class="bg-gray-900/80 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-gray-800 flex items-center gap-3">                        <i class="fa-solid fa-square-check text-brand-pink text-base"></i>
                         <div>
-                            <span class="block text-[10px] text-gray-400 uppercase font-semibold">Dainų konkurse</span>
-                            <span class="font-mono font-bold text-white text-sm">{{ active_game.songs.count }}</span>
+                            <span class="block text-[10px] text-gray-400 uppercase font-semibold">Subalsavo</span>
+                            <span class="font-mono font-bold text-white text-sm">{{ voted_count }} / {{ member_count }}</span>
                         </div>
                     </div>
                         {% if all_voted %}
@@ -329,9 +328,10 @@
 
         <div class="grid grid-cols-1 {% if submitted_songs %}md:grid-cols-2{% endif %} gap-6">
             {# --- KAIRĖ: FORMA --- #}
-            <form action="{% if user_song %}{% url 'edit_song' group_code=group.code game_id=active_game.id song_id=user_song.id %}{% else %}{% url 'add_song' group_code=group.code game_id=active_game.id %}{% endif %}" method="POST" class="space-y-3">
+            <form action="{% if user_song %}{% url 'edit_song' group_code=group.code game_id=active_game.id song_id=user_song.id %}{% else %}{% url 'add_song' group_code=group.code game_id=active_game.id %}{% endif %}" method="POST" class="space-y-3" id="songForm">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <div id="songFormErrors" class="hidden px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/40 text-xs text-red-300"></div>
                 <div>
                     <label for="{{ song_form.title.id_for_label }}" class="block text-[11px] font-semibold text-gray-300 mb-1">{{ song_form.title.label }}</label>
                     {{ song_form.title }}
@@ -545,15 +545,52 @@
     }
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') closeSongModal();
-    });
-    document.addEventListener('DOMContentLoaded', function() {
+    });    document.addEventListener('DOMContentLoaded', function() {
         const m = document.getElementById('songModal');
         if (m) {
             m.addEventListener('click', function(e) {
                 if (e.target === m) closeSongModal();
             });
         }
-    });    // --- Žaidimo kūrimo modalo valdymas ---
+        const f = document.getElementById('songForm');
+        const box = document.getElementById('songFormErrors');
+        if (f && box) {
+            f.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                box.classList.add('hidden');
+                box.innerHTML = '';
+                const btn = f.querySelector('button[type="submit"]');
+                if (btn) btn.disabled = true;
+                try {
+                    const resp = await fetch(f.action, {
+                        method: 'POST',
+                        body: new FormData(f),
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    });
+                    const ct = resp.headers.get('content-type') || '';
+                    if (!resp.ok && ct.includes('application/json')) {
+                        const data = await resp.json();
+                        const msgs = [];
+                        Object.values(data.errors || {}).forEach(arr => arr.forEach(x => msgs.push(x)));
+                        box.innerHTML = msgs.map(t => {
+                            const d = document.createElement('div');
+                            d.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i>';
+                            d.appendChild(document.createTextNode(t));
+                            return d.outerHTML;
+                        }).join('');
+                        box.classList.remove('hidden');
+                    } else {
+                        window.location.href = resp.url || window.location.href;
+                    }
+                } catch (err) {
+                    box.textContent = 'Įvyko klaida. Bandykite dar kartą.';
+                    box.classList.remove('hidden');
+                } finally {
+                    if (btn) btn.disabled = false;
+                }
+            });
+        }
+    });// --- Žaidimo kūrimo modalo valdymas ---
     function openGameModal() {
         const m = document.getElementById('gameModal');
         if (m) m.classList.remove('opacity-0', 'pointer-events-none');

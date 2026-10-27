@@ -197,10 +197,37 @@ class SongForm(forms.ModelForm):
     def clean_youtube_url(self):
         url = self.cleaned_data.get('youtube_url')
         if url:
-            # Labai paprastas tikrinimas, galima daryti sudėtingesnį su regex
-            if not ('youtube.com/watch' in url or 'youtu.be/' in url):
+            # Labai paprastas tikrinimas, galima daryti sudėtingesnį su regex            if not ('youtube.com/watch' in url or 'youtu.be/' in url):
                 raise forms.ValidationError("Prašome įvesti teisingą YouTube vaizdo įrašo nuorodą.")
         return url
+
+    def __init__(self, *args, game=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.game = game
+
+    def clean(self):
+        """ Tikrina, ar tokia daina dar neįkelta šiame žaidime. """
+        cleaned = super().clean()
+        if not self.game:
+            return cleaned
+        from .templatetags.muzika_tags import youtube_id
+        others = Song.objects.filter(game=self.game)
+        if self.instance and self.instance.pk:
+            others = others.exclude(pk=self.instance.pk)
+
+        url = cleaned.get('youtube_url')
+        title = (cleaned.get('title') or '').strip()
+        new_vid = youtube_id(url) if url else ''
+        norm_title = ' '.join(title.lower().split())
+
+        for s in others:
+            if new_vid and youtube_id(s.youtube_url) == new_vid:
+                self.add_error('youtube_url', f'Ši daina jau įkelta šiame žaidime („{s.title}"). Pasirinkite kitą.')
+                break
+            if norm_title and ' '.join((s.title or '').lower().split()) == norm_title:
+                self.add_error('title', f'Daina pavadinimu „{s.title}" jau įkelta šiame žaidime. Pasirinkite kitą.')
+                break
+        return cleaned
 
 class UserProfileEditForm(forms.ModelForm):
     username = forms.CharField(

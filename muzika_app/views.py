@@ -131,6 +131,8 @@ def group_admin_view(request, group_code):
     active_game = None
     active_phase = None
     all_voted = False
+    voted_count = 0
+    member_count = 0
 
     active_games_qs = group.games.filter(
         models.Q(submission_start_date__lte=now, submission_end_date__gte=now) |
@@ -148,6 +150,8 @@ def group_admin_view(request, group_code):
             if active_game:
                 group_member_ids = set(memberships.values_list('user_id', flat=True))
                 voter_ids = set(Vote.objects.filter(game=active_game).values_list('voter_id', flat=True).distinct())
+                voted_count = len(voter_ids & group_member_ids)
+                member_count = len(group_member_ids)
                 if group_member_ids == voter_ids and len(group_member_ids) > 0:
                     all_voted = True
             break
@@ -197,8 +201,9 @@ def group_admin_view(request, group_code):
         'active_phase': active_phase,
         'all_voted': all_voted,        'last_completed_game': last_completed_game,
         'winners': winners,        'user_song': user_song,
-        'song_form': song_form,
-        'submitted_songs': submitted_songs,
+        'song_form': song_form,        'submitted_songs': submitted_songs,
+        'voted_count': voted_count,
+        'member_count': member_count,
         'game_form': game_form,
         'past_games': past_games,
     }
@@ -881,8 +886,7 @@ def add_song_view(request, group_code, game_id):
             if Song.objects.filter(game=game, submitted_by=request.user).exists():
                  messages.error(request, "Jūs jau esate įkėlę dainą šiam žaidimui.")
                  return redirect('group_games_list', group_code=group.code)
-
-            form = SongForm(request.POST)
+            form = SongForm(request.POST, game=game)
             if form.is_valid():
                 song = form.save(commit=False)
                 song.game = game
@@ -902,7 +906,11 @@ def add_song_view(request, group_code, game_id):
                 except Exception as e:
                      messages.error(request, f"Įvyko klaida saugant dainą: {e}")
             else:
-                messages.error(request, 'Formoje yra klaidų. Prašome pataisyti.')
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
+                for errs in form.errors.values():
+                    for e in errs:
+                        messages.error(request, e)
         else:
             form = SongForm()
 
@@ -931,7 +939,7 @@ def edit_song_view(request, group_code, game_id, song_id):
         return redirect('group_games_list', group_code=group.code)
 
     if request.method == 'POST':
-        form = SongForm(request.POST, instance=song)
+        form = SongForm(request.POST, instance=song, game=game)
         if form.is_valid():
             try:
                 form.save()
@@ -948,7 +956,11 @@ def edit_song_view(request, group_code, game_id, song_id):
             except Exception as e:
                  messages.error(request, f"Įvyko klaida saugant dainą: {e}")
         else:
-            messages.error(request, 'Formoje yra klaidų. Prašome pataisyti.')
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
+            for errs in form.errors.values():
+                for e in errs:
+                    messages.error(request, e)
     else:
         form = SongForm(instance=song)
 

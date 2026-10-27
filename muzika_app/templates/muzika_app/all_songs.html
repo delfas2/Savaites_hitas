@@ -56,18 +56,34 @@
             </div>
 
             {% if playlists %}
-            <div class="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
-                {% for pl in playlists %}
-                <label class="playlist-item flex items-center gap-3 p-3 rounded-xl bg-gray-900/60 border border-gray-800 hover:border-brand-pink/40 cursor-pointer transition">
-                    <input type="checkbox" class="playlist-checkbox shrink-0 w-4 h-4 accent-brand-pink" value="{{ pl.game_id }}" data-name="{{ pl.name }}">
-                    <div class="min-w-0 flex-1">
-                        <span class="block text-xs font-bold text-white truncate">{{ pl.name }}</span>
-                        <span class="block text-[10px] text-gray-400 truncate">
-                            <i class="fa-solid fa-users mr-1"></i>{{ pl.group_name }}
-                            <span class="mx-1">·</span>{{ pl.song_count }} dain{{ pl.song_count|pluralize_lt:"a,os,ų" }}
-                        </span>
+            <div class="space-y-2 max-h-[60vh] overflow-y-auto pr-1">                {% for pl in playlists %}
+                <div class="rounded-xl bg-gray-900/60 border border-gray-800 hover:border-brand-pink/40 transition">
+                    <div class="flex items-center gap-2 p-3">
+                        <label class="playlist-item flex items-center gap-3 min-w-0 flex-1 cursor-pointer">
+                            <input type="checkbox" class="playlist-checkbox shrink-0 w-4 h-4 accent-brand-pink" value="{{ pl.game_id }}" data-name="{{ pl.name }}">
+                            <div class="min-w-0 flex-1">
+                                <span class="block text-xs font-bold text-white truncate">{{ pl.name }}</span>
+                                <span class="block text-[10px] text-gray-400 truncate">
+                                    <i class="fa-solid fa-users mr-1"></i>{{ pl.group_name }}
+                                    <span class="mx-1">·</span>{{ pl.song_count }} dain{{ pl.song_count|pluralize_lt:"a,os,ų" }}
+                                </span>
+                            </div>
+                        </label>
+                        <button type="button" onclick="toggleGameSongs({{ pl.game_id }})" title="Rodyti dainas" class="shrink-0 w-7 h-7 rounded-full bg-gray-800 text-gray-300 hover:text-white transition flex items-center justify-center">
+                            <i class="fa-solid fa-chevron-down text-[10px]" id="gchev-{{ pl.game_id }}"></i>
+                        </button>
                     </div>
-                </label>
+                    <div id="game-songs-{{ pl.game_id }}" class="hidden px-3 pb-3 space-y-1">
+                        {% for s in pl.songs %}
+                        <div class="flex items-center gap-2 text-[11px] text-gray-300 bg-gray-800/50 rounded-lg px-2 py-1.5">
+                            <span class="min-w-0 flex-1 truncate">{{ s.title }}</span>
+                            <button type="button" onclick="openAddModal({{ s.id }}, this.dataset.title)" data-title="{{ s.title }}" title="Įtraukti į mano grojaraštį" class="shrink-0 w-6 h-6 rounded-full bg-brand-pink/15 text-brand-pink hover:bg-brand-pink/30 transition flex items-center justify-center">
+                                <i class="fa-solid fa-plus text-[10px]"></i>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
                 {% endfor %}
             </div>
 
@@ -173,6 +189,29 @@
 {# --- VISŲ DAINŲ DUOMENYS (JSON) --- #}
 {{ playlists|json_script:"playlists-data" }}
 {{ my_playlists|json_script:"my-playlists-data" }}
+
+{# --- MODALAS: Įtraukti dainą į mano grojaraštį --- #}
+<div id="addModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4" onclick="if(event.target===this)closeAddModal()">
+    <div class="glass-panel rounded-3xl p-6 max-w-sm w-full border border-gray-800 shadow-2xl relative">
+        <button type="button" onclick="closeAddModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+            <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+        <h3 class="text-sm font-black text-white flex items-center gap-2 mb-1">
+            <i class="fa-solid fa-heart text-brand-pink"></i> Įtraukti į mano grojaraštį
+        </h3>
+        <p id="add-modal-song" class="text-[11px] text-gray-400 truncate mb-4"></p>
+        <div id="add-modal-list" class="space-y-1.5 max-h-60 overflow-y-auto pr-1 mb-4"></div>
+        <label class="block text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2">Naujas grojaraštis</label>
+        <div class="flex gap-2">
+            <input type="text" id="add-modal-new" maxlength="120" placeholder="Pavadinimas"
+                   class="flex-1 text-xs rounded-xl bg-gray-900/60 border border-gray-700 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-brand-pink">
+            <button type="button" onclick="createAndAdd()" class="shrink-0 px-3 py-2 rounded-xl bg-brand-pink/20 text-brand-pink hover:bg-brand-pink/30 text-xs font-bold transition">
+                <i class="fa-solid fa-plus"></i> Sukurti
+            </button>
+        </div>
+        <p id="add-modal-msg" class="hidden mt-3 text-[11px] text-emerald-300"></p>
+    </div>
+</div>
 
 {% else %}
 {# --- TUŠČIA BŪSENA --- #}
@@ -528,11 +567,88 @@
                 <div class="min-w-0 flex-1">
                     <span class="block text-xs font-semibold text-white truncate">${escapeHtml(song.title)}</span>
                     <span class="block text-[10px] text-gray-400 truncate">${escapeHtml(song.playlist_name)}</span>
-                </div>
-                <i class="queue-icon fa-solid fa-play text-[10px] text-gray-500 shrink-0"></i>
+                </div>                <i class="queue-icon fa-solid fa-play text-[10px] text-gray-500 shrink-0"></i>
+                <button type="button" onclick="event.stopPropagation(); openAddModal(${song.id}, queue[${i}].title)" title="Įtraukti į mano grojaraštį" class="shrink-0 w-6 h-6 rounded-full bg-brand-pink/15 text-brand-pink hover:bg-brand-pink/30 transition flex items-center justify-center">
+                    <i class="fa-solid fa-plus text-[10px]"></i>
+                </button>
             </div>
         `).join('');
     }
+
+    // ============ Žaidimo grojaraščio dainų sąrašas ============
+    function toggleGameSongs(gid) {
+        const el = document.getElementById('game-songs-' + gid);
+        const chev = document.getElementById('gchev-' + gid);
+        if (!el) return;
+        const hidden = el.classList.toggle('hidden');
+        if (chev) chev.className = 'fa-solid text-[10px] ' + (hidden ? 'fa-chevron-down' : 'fa-chevron-up');
+    }
+
+    // ============ Įtraukimas į mano grojaraštį ============
+    let addSongId = null;
+    function openAddModal(songId, title) {
+        addSongId = songId;
+        document.getElementById('add-modal-song').textContent = title || '';
+        document.getElementById('add-modal-msg').classList.add('hidden');
+        document.getElementById('add-modal-new').value = '';
+        renderAddModalList();
+        const m = document.getElementById('addModal');
+        m.classList.remove('hidden'); m.classList.add('flex');
+    }
+    function closeAddModal() {
+        const m = document.getElementById('addModal');
+        m.classList.add('hidden'); m.classList.remove('flex');
+    }
+    function renderAddModalList() {
+        const box = document.getElementById('add-modal-list');
+        if (!MY_PLAYLISTS.length) {
+            box.innerHTML = '<p class="text-[11px] text-gray-500 py-2">Dar neturite grojaraščių – sukurkite naują žemiau.</p>';
+            return;
+        }
+        box.innerHTML = MY_PLAYLISTS.map(pl => {
+            const has = pl.songs.some(s => s.id === addSongId);
+            return `<button type="button" ${has ? 'disabled' : ''} onclick="addToPlaylist(${pl.id})"
+                class="w-full flex items-center gap-2 px-3 py-2 rounded-xl border text-left text-xs transition ${has ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 cursor-default' : 'border-gray-800 bg-gray-900/60 text-white hover:border-brand-pink/50'}">
+                <i class="fa-solid ${has ? 'fa-check' : 'fa-list'} text-[10px]"></i>
+                <span class="flex-1 truncate">${escapeHtml(pl.name)}</span>
+                <span class="text-[10px] text-gray-400">${pl.song_count}</span>
+            </button>`;
+        }).join('');
+    }
+    function addToPlaylist(pid) {
+        if (!addSongId) return;
+        fetch(URLS.add(pid, addSongId), {
+            method: 'POST', headers: { 'X-CSRFToken': CSRF }
+        }).then(r => r.json()).then(data => {
+            if (!data.ok) return;
+            const pl = MY_PLAYLISTS.find(p => p.id === pid);
+            if (pl) {
+                if (!pl.songs.some(s => s.id === data.song.id)) pl.songs.push(data.song);
+                pl.song_count = data.song_count;
+            }
+            const msg = document.getElementById('add-modal-msg');
+            msg.textContent = data.created ? 'Daina įtraukta į „' + (pl ? pl.name : '') + '“!' : 'Daina jau buvo šiame grojaraštyje.';
+            msg.classList.remove('hidden');
+            renderAddModalList();
+            renderMyPlaylists();
+        });
+    }
+    function createAndAdd() {
+        const input = document.getElementById('add-modal-new');
+        const name = (input.value || '').trim();
+        if (!name) { input.focus(); return; }
+        fetch(URLS.create, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'name=' + encodeURIComponent(name)
+        }).then(r => r.json()).then(data => {
+            if (!data.ok) { alert(data.error || 'Klaida.'); return; }
+            MY_PLAYLISTS.push({ id: data.playlist.id, name: data.playlist.name, songs: [], song_count: 0 });
+            input.value = '';
+            addToPlaylist(data.playlist.id);
+        });
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAddModal(); });
 
     function highlightCurrent() {
         document.querySelectorAll('.queue-row').forEach((row, i) => {
