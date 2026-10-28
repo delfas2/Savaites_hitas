@@ -191,14 +191,12 @@ class SongForm(forms.ModelForm):
             'title': 'Dainos pavadinimas',
             'youtube_url': 'YouTube nuoroda',
             'comment': 'Komentaras (nebūtina)',
-        }
-
-    # Papildoma validacija YouTube nuorodai (paprastas pavyzdys)
+        }    # Papildoma validacija YouTube nuorodai
     def clean_youtube_url(self):
-        url = self.cleaned_data.get('youtube_url')
-        if url:
-            # Labai paprastas tikrinimas, galima daryti sudėtingesnį su regex            if not ('youtube.com/watch' in url or 'youtu.be/' in url):
-                raise forms.ValidationError("Prašome įvesti teisingą YouTube vaizdo įrašo nuorodą.")
+        from .templatetags.muzika_tags import youtube_id
+        url = (self.cleaned_data.get('youtube_url') or '').strip()
+        if url and not youtube_id(url):
+            raise forms.ValidationError("Prašome įvesti teisingą YouTube vaizdo įrašo nuorodą.")
         return url
 
     def __init__(self, *args, game=None, **kwargs):
